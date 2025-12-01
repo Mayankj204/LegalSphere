@@ -17,14 +17,17 @@
     "dotenv": "^17.2.3",
     "ethers": "^6.15.0",
     "express": "^5.1.0",
+    "express-list-endpoints": "^7.1.1",
     "express-sse": "^1.0.0",
     "form-data": "^4.0.5",
     "mongodb": "^6.21.0",
     "mongoose": "^8.20.1",
     "multer": "^2.0.2",
+    "natural": "^8.1.0",
     "node-fetch": "^3.3.2",
     "openai": "^6.9.1",
-    "pdfjs-dist": "^3.10.111",
+    "pdf-parse": "^2.4.5",
+    "pdfjs-dist": "^3.11.174",
     "tesseract.js": "^6.0.1"
   }
 }

@@ -176,6 +176,12 @@ const mockService = {
   getTasks: async () => [
     { _id: "task1", title: "Prepare petition", completed: false, dueDate: "2024-12-20" }
   ],
+    // Case chat (case-specific)
+  caseChat: async (caseId, message) => {
+    const res = await api.post(`/ai/case-chat/${caseId}`, { message });
+    return res.data;
+  },
+
 
   addTask: async () => ({ message: "Task added (mock)" }),
   toggleTask: async () => ({ message: "Task toggled (mock)" })

@@ -24,10 +24,11 @@ import UpcomingHearings from "./pages/UpcomingHearings";
 import CalendarView from "./pages/CalendarView";
 import TasksReminders from "./pages/TasksReminders";
 
+import GlobalAIChat from "./pages/GlobalAIChat";   // ⭐ NEW GLOBAL AI ASSISTANT
+
 import ProtectedRoute from "./components/ProtectedRoute";
 
 export default function App() {
-  // Sidebar width control (256px open / 64px collapsed)
   const [sidebarWidth, setSidebarWidth] = useState(256);
 
   return (
@@ -36,12 +37,12 @@ export default function App() {
       {/* TOP NAVBAR */}
       <Navbar />
 
-      {/* COLLAPSIBLE SIDEBAR (only for logged in users) */}
+      {/* COLLAPSIBLE SIDEBAR */}
       <ProtectedRoute>
         <CollapsibleSidebar onWidthChange={(w) => setSidebarWidth(w)} />
       </ProtectedRoute>
 
-      {/* MAIN PAGE WRAPPER (shifts right based on sidebar width) */}
+      {/* MAIN CONTENT */}
       <div
         className="pt-20 transition-all duration-300"
         style={{ marginLeft: `${sidebarWidth}px` }}
@@ -56,87 +57,64 @@ export default function App() {
           <Route path="/search-lawyers" element={<SearchLawyers />} />
           <Route path="/lawyer/:id" element={<LawyerProfile />} />
 
-          {/* Client Dashboard */}
+          {/* Dashboards */}
           <Route
             path="/dashboard-client"
-            element={
-              <ProtectedRoute>
-                <DashboardClient />
-              </ProtectedRoute>
-            }
+            element={<ProtectedRoute><DashboardClient /></ProtectedRoute>}
           />
 
-          {/* Lawyer Dashboard */}
           <Route
             path="/dashboard-lawyer"
+            element={<ProtectedRoute><DashboardLawyer /></ProtectedRoute>}
+          />
+
+          {/* ⭐ GLOBAL GENERAL AI ASSISTANT */}
+          <Route
+            path="/ai-assistant"
             element={
               <ProtectedRoute>
-                <DashboardLawyer />
+                <GlobalAIChat />
               </ProtectedRoute>
             }
           />
 
-          {/* AI Document Chat Workspace */}
+          {/* AI Workspace (Document Chat) */}
           <Route
             path="/workspace"
-            element={
-              <ProtectedRoute>
-                <AIWorkspace />
-              </ProtectedRoute>
-            }
+            element={<ProtectedRoute><AIWorkspace /></ProtectedRoute>}
           />
 
-          {/* Case Details Page */}
+          {/* Case Details */}
           <Route
             path="/case/:id"
-            element={
-              <ProtectedRoute>
-                <CaseDetails />
-              </ProtectedRoute>
-            }
+            element={<ProtectedRoute><CaseDetails /></ProtectedRoute>}
           />
 
           {/* Case Workspace */}
           <Route
             path="/case/:caseId/workspace"
-            element={
-              <ProtectedRoute>
-                <CaseWorkspace />
-              </ProtectedRoute>
-            }
+            element={<ProtectedRoute><CaseWorkspace /></ProtectedRoute>}
           />
 
-          {/* Hearings Page */}
+          {/* Hearings */}
           <Route
             path="/hearings"
-            element={
-              <ProtectedRoute>
-                <UpcomingHearings />
-              </ProtectedRoute>
-            }
+            element={<ProtectedRoute><UpcomingHearings /></ProtectedRoute>}
           />
 
-          {/* Calendar Page */}
+          {/* Calendar */}
           <Route
             path="/calendar"
-            element={
-              <ProtectedRoute>
-                <CalendarView />
-              </ProtectedRoute>
-            }
+            element={<ProtectedRoute><CalendarView /></ProtectedRoute>}
           />
 
-          {/* Tasks & Reminders */}
+          {/* Tasks */}
           <Route
             path="/tasks"
-            element={
-              <ProtectedRoute>
-                <TasksReminders />
-              </ProtectedRoute>
-            }
+            element={<ProtectedRoute><TasksReminders /></ProtectedRoute>}
           />
 
-          {/* Fallback */}
+          {/* 404 */}
           <Route path="*" element={<h1 className="p-10">404 - Page Not Found</h1>} />
         </Routes>
       </div>

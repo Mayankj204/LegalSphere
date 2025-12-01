@@ -22,12 +22,16 @@ export default function Navbar() {
             Find Lawyers
           </Link>
 
-          {/* AI WORKSPACE */}
+          {/* GENERAL AI ASSISTANT */}
           {user && (
-            <Link
-              to="/workspace"
-              className="hover:text-red-500 transition"
-            >
+            <Link to="/ai-assistant" className="hover:text-red-500 transition">
+              AI Assistant
+            </Link>
+          )}
+
+          {/* CASE DOCUMENT AI WORKSPACE */}
+          {user && (
+            <Link to="/workspace" className="hover:text-red-500 transition">
               AI Workspace
             </Link>
           )}
@@ -67,34 +71,33 @@ export default function Navbar() {
         </button>
       </div>
 
-      {/* ---------------- MOBILE MENU ---------------- */}
+      {/* MOBILE MENU */}
       {open && (
         <div className="md:hidden bg-black/80 border-t border-red-500/20">
           <div className="px-6 py-4 space-y-3">
 
-            <Link
-              to="/search-lawyers"
-              onClick={() => setOpen(false)}
-              className="block text-gray-200"
-            >
+            <Link to="/search-lawyers" onClick={() => setOpen(false)} className="block">
               Find Lawyers
             </Link>
 
-            {/* AI WORKSPACE */}
+            {/* GENERAL AI ASSISTANT */}
             {user && (
-              <Link
-                to="/workspace"
-                onClick={() => setOpen(false)}
-                className="block text-gray-200"
-              >
+              <Link to="/ai-assistant" onClick={() => setOpen(false)} className="block">
+                AI Assistant
+              </Link>
+            )}
+
+            {/* CASE AI WORKSPACE */}
+            {user && (
+              <Link to="/workspace" onClick={() => setOpen(false)} className="block">
                 AI Workspace
               </Link>
             )}
 
             {!user && (
               <>
-                <Link to="/login" onClick={() => setOpen(false)} className="block text-gray-200">Login</Link>
-                <Link to="/register" onClick={() => setOpen(false)} className="block text-gray-200">Register</Link>
+                <Link to="/login" onClick={() => setOpen(false)} className="block">Login</Link>
+                <Link to="/register" onClick={() => setOpen(false)} className="block">Register</Link>
               </>
             )}
 
@@ -103,7 +106,7 @@ export default function Navbar() {
                 <Link
                   to={user.role === "client" ? "/dashboard-client" : "/dashboard-lawyer"}
                   onClick={() => setOpen(false)}
-                  className="block text-gray-200"
+                  className="block"
                 >
                   Dashboard
                 </Link>

@@ -1,6 +1,6 @@
-// src/routes/aiChatRoutes.js
+// server/src/routes/aiChatRoutes.js
 import express from "express";
-
+import { streamGeneralAI } from "../controllers/aiChatController.js";
 import {
   startSession,
   streamMessage,
@@ -9,13 +9,17 @@ import {
 
 const router = express.Router();
 
-// Create a new chat session
-router.post("/start", startSession);   // <-- FIXED for frontend
+/* ============================================================
+   🌍 GLOBAL AI (Navbar Chat)
+   ============================================================ */
+router.get("/general", streamGeneralAI);  
+// final resolved path → GET /api/ai/chat/general
 
-// Stream LLM response
-router.get("/stream", streamMessage);
-
-// Send normal message (non-stream)
-router.post("/message", postMessage);
+/* ============================================================
+   🧠 DOCUMENT AI WORKSPACE
+   ============================================================ */
+router.post("/start", startSession);           
+router.get("/stream", streamMessage);          
+router.post("/message", postMessage);          
 
 export default router;

@@ -15,7 +15,7 @@ const DocumentSchema = new mongoose.Schema(
 
     storageUrl: {
       type: String,
-      required: true,      // 🔥 MUST be required so dummy URL is never saved again
+      required: true,
     },
 
     tag: {
@@ -32,6 +32,13 @@ const DocumentSchema = new mongoose.Schema(
     fullText: {
       type: String,
       default: "",
+    },
+
+    // <-- stored embedding vector (array of numbers)
+    embedding: {
+      type: [Number],
+      default: [],
+      index: false,
     },
   },
   { timestamps: true }
