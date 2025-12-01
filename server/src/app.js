@@ -1,27 +1,30 @@
-// server/src/app.js
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import path from "path";
 
 dotenv.config();
 
 // ROUTES
 import docRoutes from "./routes/docRoutes.js";
-import aiChatRoutes from "./routes/aiChatRoutes.js"; // Only RAG Chat
-// aiRoutes removed — no longer required
+import aiChatRoutes from "./routes/aiChatRoutes.js";
+import caseRoutes from "./routes/caseRoutes.js";
+import caseSubRoutes from "./routes/caseSubRoutes.js";
 
 const app = express();
 
-// MIDDLEWARE
 app.use(cors());
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true }));
 
-// ROUTING
-app.use("/api/documents", docRoutes);        // Upload + list + delete docs
-app.use("/api/ai/chat", aiChatRoutes);       // RAG chat system
+// Serve uploads folder
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
-// DEFAULT ROUTE
+app.use("/api/documents", docRoutes);
+app.use("/api/ai/chat", aiChatRoutes);
+app.use("/api/cases", caseRoutes);
+app.use("/api", caseSubRoutes);
+
 app.get("/", (req, res) => {
   res.send("LegalSphere Backend Running...");
 });

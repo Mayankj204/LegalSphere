@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 5000;
 // CONNECT DATABASE
 connectDB();
 
-// LOAD LOCAL MINI-LM MODEL
+// LOAD LOCAL MINI-LM MODEL (for RAG/AI system)
 await loadEmbeddingModel();
 
 // START SERVER
