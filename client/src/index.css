@@ -1,0 +1,6 @@
+/* src/index.css - Tailwind only + Manrope import */
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
