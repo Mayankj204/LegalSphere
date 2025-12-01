@@ -4,7 +4,7 @@ const tabs = [
   { key: "overview", label: "Overview" },
   { key: "documents", label: "Documents" },
   { key: "notes", label: "Notes" },
-  { key: "aitools", label: "AI Tools" },
+  { key: "aiworkspace", label: "AI Workspace" },   // ✅ Updated
   { key: "timeline", label: "Timeline" },
   { key: "billing", label: "Billing" },
 ];

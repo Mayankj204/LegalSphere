@@ -3,10 +3,11 @@ import { useParams, useNavigate } from "react-router-dom";
 import workspaceService from "../services/workspaceService";
 import CaseHeader from "../components/CaseHeader";
 import WorkspaceTabs from "../components/WorkspaceTabs";
+
 import Overview from "./workspace/Overview";
 import Documents from "./workspace/Documents";
 import Notes from "./workspace/Notes";
-import AITools from "./workspace/AITools";
+import CaseAIWorkspace from "./workspace/CaseAIWorkspace";   // ✅ NEW
 import Timeline from "./workspace/Timeline";
 import Billing from "./workspace/Billing";
 
@@ -23,7 +24,6 @@ export default function CaseWorkspace() {
       return;
     }
     loadCase();
-    // eslint-disable-next-line
   }, [caseId]);
 
   const loadCase = async () => {
@@ -49,7 +49,7 @@ export default function CaseWorkspace() {
   if (!caseData) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-red-400">Case not found or you are not authorized.</div>
+        <div className="text-red-400">Case not found or unauthorized.</div>
       </div>
     );
   }
@@ -57,6 +57,7 @@ export default function CaseWorkspace() {
   return (
     <div className="min-h-screen bg-black text-white p-6">
       <CaseHeader caseData={caseData} refreshCase={loadCase} />
+
       <div className="mt-6">
         <WorkspaceTabs active={activeTab} onChange={setActiveTab} />
       </div>
@@ -65,7 +66,10 @@ export default function CaseWorkspace() {
         {activeTab === "overview" && <Overview caseData={caseData} refreshCase={loadCase} />}
         {activeTab === "documents" && <Documents caseId={caseId} />}
         {activeTab === "notes" && <Notes caseId={caseId} />}
-        {activeTab === "aitools" && <AITools caseId={caseId} />}
+
+        {/* ⭐ REPLACED AITOOLS HERE */}
+        {activeTab === "aiworkspace" && <CaseAIWorkspace caseId={caseId} />}
+
         {activeTab === "timeline" && <Timeline caseId={caseId} />}
         {activeTab === "billing" && <Billing caseId={caseId} />}
       </div>
