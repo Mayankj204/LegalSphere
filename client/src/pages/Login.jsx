@@ -20,10 +20,22 @@ export default function Login() {
     formState: { errors, isSubmitting }
   } = useForm({ resolver: yupResolver(schema) });
 
-  const onSubmit = async (data) => {
-    login({ email: data.email, role: "client", token: "demo-token" });
+const onSubmit = async (data) => {
+  const res = await login(data);
+
+  if (!res) {
+    alert("Login failed");
+    return;
+  }
+
+  if (res.role === "lawyer") {
+    navigate("/dashboard-lawyer");
+  } else {
     navigate("/dashboard-client");
-  };
+  }
+};
+
+
 
   return (
     <div className="flex justify-center pt-32 px-4">

@@ -1,37 +1,44 @@
-// src/context/AuthContext.jsx
-import React, { createContext, useEffect, useState } from "react";
+import { createContext, useState } from "react";
+import { loginUser, registerUser } from "../services/authService";
 
-export const AuthContext = createContext({
-  user: null,
-  login: () => {},
-  logout: () => {}
-});
+export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem("ls-user")) || null;
-    } catch {
-      return null;
+  const [user, setUser] = useState(
+    JSON.parse(localStorage.getItem("user")) || null
+  );
+
+  const login = async (data) => {
+    const res = await loginUser(data);
+
+    if (res?.token) {
+      localStorage.setItem("user", JSON.stringify(res));
+      setUser(res);
+      return res;   // ✅ IMPORTANT
     }
-  });
 
-  useEffect(() => {
-    if (user) localStorage.setItem("ls-user", JSON.stringify(user));
-    else localStorage.removeItem("ls-user");
-  }, [user]);
+    return null;
+  };
 
-  const login = (userData) => {
-    // userData should include role: 'client' or 'lawyer'
-    setUser(userData);
+  const register = async (data) => {
+    const res = await registerUser(data);
+
+    if (res?.token) {
+      localStorage.setItem("user", JSON.stringify(res));
+      setUser(res);
+      return res;   // ✅ IMPORTANT
+    }
+
+    return null;
   };
 
   const logout = () => {
+    localStorage.removeItem("user");
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
