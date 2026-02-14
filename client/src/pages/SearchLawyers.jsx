@@ -25,36 +25,61 @@ export default function SearchLawyers() {
 
   return (
     <PageTransition>
-      <div className="pt-32 px-4">
-        <h1 className="text-4xl font-bold">Find Lawyers</h1>
+      <div className="pt-3 pb-20 px-6">
+        {/* CONTAINER */}
+        <div className="max-w-7xl mx-auto">
 
-        {/* SEARCH BAR */}
-        <div className="mt-6 flex gap-4">
-          <input
-            type="text"
-            placeholder="Search by name..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="px-4 py-2 bg-[#111] border border-red-600/30 rounded w-80"
-          />
-          <button
-            onClick={fetchLawyers}
-            className="px-4 py-2 bg-red-600 rounded"
-          >
-            Search
-          </button>
-        </div>
-
-        {/* LAWYERS GRID */}
-        {loading ? (
-          <div className="mt-10">Loading lawyers...</div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
-            {lawyers.map((l) => (
-              <LawyerCard key={l._id} lawyer={l} />
-            ))}
+          {/* HERO SECTION */}
+          <div className="text-center mb-14">
+            <h1 className="text-5xl font-bold text-white">
+              Find the Right Lawyer
+            </h1>
+            <p className="text-gray-400 mt-4 text-lg">
+              Search experienced professionals based on your legal needs.
+            </p>
           </div>
-        )}
+
+          {/* SEARCH BAR */}
+          <div className="flex justify-center mb-14">
+            <div className="flex w-full max-w-2xl bg-black/40 backdrop-blur-xl border border-red-600/20 rounded-xl overflow-hidden shadow-lg shadow-red-600/10">
+              <input
+                type="text"
+                placeholder="Search by name, specialization..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="flex-1 px-6 py-4 bg-transparent text-white focus:outline-none"
+              />
+              <button
+                onClick={fetchLawyers}
+                className="px-8 bg-red-600 hover:bg-red-700 transition font-semibold"
+              >
+                Search
+              </button>
+            </div>
+          </div>
+
+          {/* RESULTS */}
+          {loading ? (
+            <div className="text-center text-gray-400 mt-20 text-lg">
+              Loading lawyers...
+            </div>
+          ) : lawyers.length === 0 ? (
+            <div className="text-center text-gray-500 mt-20">
+              <h3 className="text-2xl font-semibold">
+                No lawyers found
+              </h3>
+              <p className="mt-2">
+                Try searching with a different keyword.
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              {lawyers.map((l) => (
+                <LawyerCard key={l._id} lawyer={l} />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </PageTransition>
   );

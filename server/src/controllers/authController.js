@@ -6,8 +6,17 @@ import { generateToken } from "../utils/jwt.js";
 /* ================= REGISTER ================= */
 export const register = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const {
+      name,
+      email,
+      password,
+      role,
+      specialization,
+      experience,
+      city,
+    } = req.body;
 
+    // Check existing user
     const existingUser =
       (await User.findOne({ email })) ||
       (await Lawyer.findOne({ email }));
@@ -20,17 +29,16 @@ export const register = async (req, res) => {
 
     let newUser;
 
-  if (role === "lawyer") {
-  newUser = await Lawyer.create({
-    name,
-    email,
-    password: hashedPassword,
-    specialization,
-    experience,
-    city,
-  });
-}
-else {
+    if (role === "lawyer") {
+      newUser = await Lawyer.create({
+        name,
+        email,
+        password: hashedPassword,
+        specialization: specialization || "",
+        experience: experience || "",
+        city: city || "",
+      });
+    } else {
       newUser = await User.create({
         name,
         email,

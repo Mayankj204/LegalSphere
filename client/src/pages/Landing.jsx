@@ -18,7 +18,7 @@ export default function Landing() {
         </p>
 
         <Link
-          to="/search-lawyers"
+          to="/login"
           className="inline-block mt-8 px-8 py-4 bg-red-600 hover:bg-red-700 transition text-white font-semibold rounded-lg shadow-lg shadow-red-600/30"
         >
           Get Started

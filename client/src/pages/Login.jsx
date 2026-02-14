@@ -20,22 +20,20 @@ export default function Login() {
     formState: { errors, isSubmitting }
   } = useForm({ resolver: yupResolver(schema) });
 
-const onSubmit = async (data) => {
-  const res = await login(data);
+  const onSubmit = async (data) => {
+    const res = await login(data);
 
-  if (!res) {
-    alert("Login failed");
-    return;
-  }
+    if (!res) {
+      alert("Login failed");
+      return;
+    }
 
-  if (res.role === "lawyer") {
-    navigate("/dashboard-lawyer");
-  } else {
-    navigate("/dashboard-client");
-  }
-};
-
-
+    if (res.role === "lawyer") {
+      navigate("/dashboard-lawyer");
+    } else {
+      navigate("/dashboard-client");
+    }
+  };
 
   return (
     <div className="flex justify-center pt-32 px-4">
@@ -49,7 +47,7 @@ const onSubmit = async (data) => {
           <label className="text-gray-300 text-sm">Email</label>
           <input
             {...register("email")}
-            className="w-full mt-1 p-3 bg-black/60 text-white border border-red-600/20 rounded-lg focus:outline-none"
+            className="w-full mt-1 p-3 bg-black/60 text-white border border-red-600/20 rounded-lg focus:outline-none focus:border-red-600"
           />
           {errors.email && (
             <p className="text-sm text-red-400 mt-1">{errors.email.message}</p>
@@ -61,7 +59,7 @@ const onSubmit = async (data) => {
           <input
             type="password"
             {...register("password")}
-            className="w-full mt-1 p-3 bg-black/60 text-white border border-red-600/20 rounded-lg focus:outline-none"
+            className="w-full mt-1 p-3 bg-black/60 text-white border border-red-600/20 rounded-lg focus:outline-none focus:border-red-600"
           />
           {errors.password && (
             <p className="text-sm text-red-400 mt-1">{errors.password.message}</p>
@@ -74,6 +72,20 @@ const onSubmit = async (data) => {
         >
           {isSubmitting ? "Logging in..." : "Login"}
         </button>
+
+        {/* Redirect to Register */}
+        <div className="mt-6 text-center">
+          <p className="text-gray-400 text-sm">
+            Not registered yet?
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate("/register")}
+            className="mt-2 text-red-500 hover:text-red-400 transition font-semibold"
+          >
+            Create an Account
+          </button>
+        </div>
       </form>
     </div>
   );
