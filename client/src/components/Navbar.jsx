@@ -6,6 +6,11 @@ export default function Navbar() {
   const { user, logout } = useContext(AuthContext);
   const [open, setOpen] = useState(false);
 
+  const dashboardPath =
+    user?.role === "lawyer"
+      ? "/dashboard-lawyer"
+      : "/dashboard-client";
+
   return (
     <header className="w-full fixed top-0 z-50 bg-black/70 backdrop-blur-xl border-b border-red-600/30">
       <div className="max-w-7xl mx-auto flex items-center justify-between py-4 px-6">
@@ -18,47 +23,68 @@ export default function Navbar() {
         {/* DESKTOP NAV */}
         <nav className="hidden md:flex items-center gap-8 text-gray-200">
 
-          <Link to="/search-lawyers" className="hover:text-red-500 transition">
-            Find Lawyers
-          </Link>
-
-          {/* GENERAL AI ASSISTANT */}
-          {user && (
-            <Link to="/ai-assistant" className="hover:text-red-500 transition">
-              AI Assistant
-            </Link>
-          )}
-
-          {/* CASE DOCUMENT AI WORKSPACE */}
-          {user && (
-            <Link to="/workspace" className="hover:text-red-500 transition">
-              AI Workspace
-            </Link>
-          )}
-
-          {!user && (
+          {/* ---------------- CLIENT NAV ---------------- */}
+          {user?.role === "client" && (
             <>
-              <Link to="/login" className="hover:text-red-500 transition">Login</Link>
-              <Link to="/register" className="hover:text-red-500 transition">Register</Link>
-            </>
-          )}
+              <Link to="/search-lawyers" className="hover:text-red-500 transition">
+                Find Lawyers
+              </Link>
 
-          {user && (
-            <>
-              <Link
-                to={user.role === "client" ? "/dashboard-client" : "/dashboard-lawyer"}
-                className="hover:text-red-500 transition"
-              >
+              <Link to={dashboardPath} className="hover:text-red-500 transition">
                 Dashboard
               </Link>
 
-              <button
-                onClick={logout}
-                className="text-red-500 font-semibold hover:text-red-400"
-              >
-                Logout
-              </button>
+              <Link to="/ai-assistant" className="hover:text-red-500 transition">
+                AI Assistant
+              </Link>
+
+              <Link to="/profile" className="hover:text-red-500 transition">
+                Profile
+              </Link>
             </>
+          )}
+
+          {/* ---------------- LAWYER NAV ---------------- */}
+          {user?.role === "lawyer" && (
+            <>
+              <Link to={dashboardPath} className="hover:text-red-500 transition">
+                Dashboard
+              </Link>
+
+              <Link to="/ai-assistant" className="hover:text-red-500 transition">
+                AI Assistant
+              </Link>
+
+              <Link to="/workspace" className="hover:text-red-500 transition">
+                Workspace
+              </Link>
+
+              <Link to="/profile" className="hover:text-red-500 transition">
+                Profile
+              </Link>
+            </>
+          )}
+
+          {/* ---------------- PUBLIC NAV ---------------- */}
+          {!user && (
+            <>
+              <Link to="/login" className="hover:text-red-500 transition">
+                Login
+              </Link>
+              <Link to="/register" className="hover:text-red-500 transition">
+                Register
+              </Link>
+            </>
+          )}
+
+          {/* ---------------- LOGOUT ---------------- */}
+          {user && (
+            <button
+              onClick={logout}
+              className="text-red-500 font-semibold hover:text-red-400 transition"
+            >
+              Logout
+            </button>
           )}
         </nav>
 
@@ -73,51 +99,74 @@ export default function Navbar() {
 
       {/* MOBILE MENU */}
       {open && (
-        <div className="md:hidden bg-black/80 border-t border-red-500/20">
-          <div className="px-6 py-4 space-y-3">
+        <div className="md:hidden bg-black/90 border-t border-red-500/20">
+          <div className="px-6 py-4 space-y-4 text-gray-200">
 
-            <Link to="/search-lawyers" onClick={() => setOpen(false)} className="block">
-              Find Lawyers
-            </Link>
-
-            {/* GENERAL AI ASSISTANT */}
-            {user && (
-              <Link to="/ai-assistant" onClick={() => setOpen(false)} className="block">
-                AI Assistant
-              </Link>
-            )}
-
-            {/* CASE AI WORKSPACE */}
-            {user && (
-              <Link to="/workspace" onClick={() => setOpen(false)} className="block">
-                AI Workspace
-              </Link>
-            )}
-
-            {!user && (
+            {/* CLIENT MOBILE */}
+            {user?.role === "client" && (
               <>
-                <Link to="/login" onClick={() => setOpen(false)} className="block">Login</Link>
-                <Link to="/register" onClick={() => setOpen(false)} className="block">Register</Link>
-              </>
-            )}
+                <Link to="/search-lawyers" onClick={() => setOpen(false)} className="block">
+                  Find Lawyers
+                </Link>
 
-            {user && (
-              <>
-                <Link
-                  to={user.role === "client" ? "/dashboard-client" : "/dashboard-lawyer"}
-                  onClick={() => setOpen(false)}
-                  className="block"
-                >
+                <Link to={dashboardPath} onClick={() => setOpen(false)} className="block">
                   Dashboard
                 </Link>
 
-                <button
-                  onClick={() => { logout(); setOpen(false); }}
-                  className="block text-red-500 font-semibold"
-                >
-                  Logout
-                </button>
+                <Link to="/ai-assistant" onClick={() => setOpen(false)} className="block">
+                  AI Assistant
+                </Link>
+
+                <Link to="/profile" onClick={() => setOpen(false)} className="block">
+                  Profile
+                </Link>
               </>
+            )}
+
+            {/* LAWYER MOBILE */}
+            {user?.role === "lawyer" && (
+              <>
+                <Link to={dashboardPath} onClick={() => setOpen(false)} className="block">
+                  Dashboard
+                </Link>
+
+                <Link to="/ai-assistant" onClick={() => setOpen(false)} className="block">
+                  AI Assistant
+                </Link>
+
+                <Link to="/workspace" onClick={() => setOpen(false)} className="block">
+                  Workspace
+                </Link>
+
+                <Link to="/profile" onClick={() => setOpen(false)} className="block">
+                  Profile
+                </Link>
+              </>
+            )}
+
+            {/* PUBLIC MOBILE */}
+            {!user && (
+              <>
+                <Link to="/login" onClick={() => setOpen(false)} className="block">
+                  Login
+                </Link>
+                <Link to="/register" onClick={() => setOpen(false)} className="block">
+                  Register
+                </Link>
+              </>
+            )}
+
+            {/* LOGOUT MOBILE */}
+            {user && (
+              <button
+                onClick={() => {
+                  logout();
+                  setOpen(false);
+                }}
+                className="block text-red-500 font-semibold"
+              >
+                Logout
+              </button>
             )}
           </div>
         </div>

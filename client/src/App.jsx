@@ -34,22 +34,24 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-
       {/* NAVBAR */}
       <Navbar />
 
       {/* SIDEBAR ONLY IF LOGGED IN */}
-      {user && (
+      {/* SIDEBAR ONLY FOR LAWYERS */}
+      {user?.role === "lawyer" && (
         <CollapsibleSidebar onWidthChange={(w) => setSidebarWidth(w)} />
       )}
 
       {/* MAIN CONTENT */}
       <div
         className="pt-20 transition-all duration-300"
-        style={{ marginLeft: user ? `${sidebarWidth}px` : "0px" }}
+        style={{
+          marginLeft: user?.role === "lawyer" ? `${sidebarWidth}px` : "0px",
+        }}
       >
-        <Routes>
 
+        <Routes>
           {/* PUBLIC ROUTES */}
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
@@ -60,51 +62,89 @@ export default function App() {
           {/* PROTECTED ROUTES */}
           <Route
             path="/dashboard-client"
-            element={<ProtectedRoute><DashboardClient /></ProtectedRoute>}
+            element={
+              <ProtectedRoute role="client">
+                <DashboardClient />
+              </ProtectedRoute>
+            }
           />
 
           <Route
             path="/dashboard-lawyer"
-            element={<ProtectedRoute><DashboardLawyer /></ProtectedRoute>}
+            element={
+              <ProtectedRoute role="lawyer">
+                <DashboardLawyer />
+              </ProtectedRoute>
+            }
           />
 
           <Route
             path="/ai-assistant"
-            element={<ProtectedRoute><GlobalAIChat /></ProtectedRoute>}
+            element={
+              <ProtectedRoute>
+                <GlobalAIChat />
+              </ProtectedRoute>
+            }
           />
 
           <Route
             path="/workspace"
-            element={<ProtectedRoute><AIWorkspace /></ProtectedRoute>}
+            element={
+              <ProtectedRoute role="lawyer">
+                <AIWorkspace />
+              </ProtectedRoute>
+            }
           />
 
           <Route
             path="/case/:id"
-            element={<ProtectedRoute><CaseDetails /></ProtectedRoute>}
+            element={
+              <ProtectedRoute>
+                <CaseDetails />
+              </ProtectedRoute>
+            }
           />
 
           <Route
             path="/case/:caseId/workspace"
-            element={<ProtectedRoute><CaseWorkspace /></ProtectedRoute>}
+            element={
+              <ProtectedRoute>
+                <CaseWorkspace />
+              </ProtectedRoute>
+            }
           />
 
           <Route
             path="/hearings"
-            element={<ProtectedRoute><UpcomingHearings /></ProtectedRoute>}
+            element={
+              <ProtectedRoute>
+                <UpcomingHearings />
+              </ProtectedRoute>
+            }
           />
 
           <Route
             path="/calendar"
-            element={<ProtectedRoute><CalendarView /></ProtectedRoute>}
+            element={
+              <ProtectedRoute>
+                <CalendarView />
+              </ProtectedRoute>
+            }
           />
 
           <Route
             path="/tasks"
-            element={<ProtectedRoute><TasksReminders /></ProtectedRoute>}
+            element={
+              <ProtectedRoute>
+                <TasksReminders />
+              </ProtectedRoute>
+            }
           />
 
-          <Route path="*" element={<h1 className="p-10">404 - Page Not Found</h1>} />
-
+          <Route
+            path="*"
+            element={<h1 className="p-10">404 - Page Not Found</h1>}
+          />
         </Routes>
       </div>
     </div>
