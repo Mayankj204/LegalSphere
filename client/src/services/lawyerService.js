@@ -1,10 +1,11 @@
 // src/services/lawyerService.js
 import API from "./api";
 
-export const getAllLawyers = async () => {
-  const res = await API.get("/lawyers");
+export const getAllLawyers = async (search = "") => {
+  const res = await API.get(`/lawyers?search=${search}`);
   return res.data;
 };
+
 
 export const getLawyerById = async (id) => {
   const res = await API.get(`/lawyers/${id}`);

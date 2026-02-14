@@ -20,13 +20,17 @@ export const register = async (req, res) => {
 
     let newUser;
 
-    if (role === "lawyer") {
-      newUser = await Lawyer.create({
-        name,
-        email,
-        password: hashedPassword,
-      });
-    } else {
+  if (role === "lawyer") {
+  newUser = await Lawyer.create({
+    name,
+    email,
+    password: hashedPassword,
+    specialization,
+    experience,
+    city,
+  });
+}
+else {
       newUser = await User.create({
         name,
         email,

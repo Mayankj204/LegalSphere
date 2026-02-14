@@ -37,7 +37,7 @@ export default function App() {
       {/* NAVBAR */}
       <Navbar />
 
-      {/* SIDEBAR ONLY IF LOGGED IN */}
+     
       {/* SIDEBAR ONLY FOR LAWYERS */}
       {user?.role === "lawyer" && (
         <CollapsibleSidebar onWidthChange={(w) => setSidebarWidth(w)} />

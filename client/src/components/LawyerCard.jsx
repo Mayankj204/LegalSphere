@@ -18,7 +18,7 @@ export default function LawyerCard({ lawyer }) {
       </p>
 
       <p className="text-ls-offwhite/80 text-sm">
-        Location: {lawyer.location}
+        Location: {lawyer.city}
       </p>
 
       <Link

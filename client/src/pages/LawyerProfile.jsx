@@ -1,39 +1,29 @@
-// src/pages/LawyerProfile.jsx
-
-import PageTransition from "../components/PageTransition";
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import { getLawyerById } from "../services/lawyerService";
 
 export default function LawyerProfile() {
-  // Mock profile
-  const profile = {
-    name: "Amit Sharma",
-    specialization: "Criminal Law",
-    experience: "8 years",
-    email: "amitlawyer@example.com",
-  };
+  const { id } = useParams();
+  const [lawyer, setLawyer] = useState(null);
+
+  useEffect(() => {
+    const fetchLawyer = async () => {
+      const data = await getLawyerById(id);
+      setLawyer(data);
+    };
+    fetchLawyer();
+  }, [id]);
+
+  if (!lawyer) return <div>Loading...</div>;
 
   return (
-    <PageTransition>
-      <div className="pt-32 px-4 max-w-2xl mx-auto">
-        <h1 className="text-4xl font-extrabold text-ls-offwhite">
-          Lawyer Profile
-        </h1>
-
-        <div className="mt-10 p-6 bg-ls-charcoal/40 border border-ls-red/10 rounded-lg-2 shadow-card">
-          <h2 className="text-xl font-bold text-ls-offwhite">
-            {profile.name}
-          </h2>
-          <p className="text-ls-muted mt-1">{profile.specialization}</p>
-
-          <div className="mt-4 space-y-1">
-            <p className="text-ls-offwhite">
-              Experience: <span className="text-ls-red">{profile.experience}</span>
-            </p>
-            <p className="text-ls-offwhite">
-              Email: <span className="text-ls-red">{profile.email}</span>
-            </p>
-          </div>
-        </div>
-      </div>
-    </PageTransition>
+    <div className="pt-32 px-4 max-w-2xl mx-auto">
+      <h1 className="text-3xl font-bold">{lawyer.name}</h1>
+      <p className="mt-2">{lawyer.specialization}</p>
+      <p>Experience: {lawyer.experience} years</p>
+      <p>City: {lawyer.city}</p>
+      <p>Email: {lawyer.email}</p>
+      <p className="mt-4">{lawyer.bio}</p>
+    </div>
   );
 }

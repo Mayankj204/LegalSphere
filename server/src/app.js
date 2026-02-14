@@ -13,6 +13,7 @@ import aiChatRoutes from "./routes/aiChatRoutes.js";  // GLOBAL + DOC AI
 import caseRoutes from "./routes/caseRoutes.js";
 import caseSubRoutes from "./routes/caseSubRoutes.js";
 import caseAiRoutes from "./routes/caseAiRoutes.js";
+import lawyerRoutes from "./routes/lawyerRoutes.js";
 
 const app = express();
 
@@ -51,6 +52,7 @@ app.use("/api/cases", caseRoutes);
 
 /* 4️⃣ OTHER FEATURES */
 app.use("/api", caseSubRoutes);
+app.use("/api/lawyers", lawyerRoutes);
 
 /* 5️⃣ CASE AI (LAST) */
 app.use("/api/ai", caseAiRoutes);

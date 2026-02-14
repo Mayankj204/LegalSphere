@@ -1,70 +1,55 @@
-// src/pages/SearchLawyers.jsx
-
 import { useEffect, useState } from "react";
 import PageTransition from "../components/PageTransition";
 import LawyerCard from "../components/LawyerCard";
+import { getAllLawyers } from "../services/lawyerService";
 
 export default function SearchLawyers() {
-  const [loading, setLoading] = useState(true);
   const [lawyers, setLawyers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
 
-  // Mock data – backend will replace
-  const demoLawyers = [
-    {
-      _id: "1",
-      name: "Amit Sharma",
-      specialization: "Criminal Law",
-      experience: "8 years",
-      city: "Delhi",
-    },
-    {
-      _id: "2",
-      name: "Priya Mehta",
-      specialization: "Corporate Law",
-      experience: "5 years",
-      city: "Mumbai",
-    },
-    {
-      _id: "3",
-      name: "Rahul Verma",
-      specialization: "Cyber Law",
-      experience: "6 years",
-      city: "Bengaluru",
-    },
-  ];
+  const fetchLawyers = async () => {
+    setLoading(true);
+    try {
+      const data = await getAllLawyers(search);
+      setLawyers(data);
+    } catch (err) {
+      console.error(err);
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
-    setTimeout(() => {
-      setLawyers(demoLawyers);
-      setLoading(false);
-    }, 900);
+    fetchLawyers();
   }, []);
 
   return (
     <PageTransition>
       <div className="pt-32 px-4">
-        <h1 className="text-4xl font-extrabold text-ls-offwhite">Find Lawyers</h1>
-        <p className="mt-2 text-ls-muted">
-          Browse through verified legal professionals based on your needs.
-        </p>
+        <h1 className="text-4xl font-bold">Find Lawyers</h1>
 
-        {/* Skeleton Loader */}
+        {/* SEARCH BAR */}
+        <div className="mt-6 flex gap-4">
+          <input
+            type="text"
+            placeholder="Search by name..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="px-4 py-2 bg-[#111] border border-red-600/30 rounded w-80"
+          />
+          <button
+            onClick={fetchLawyers}
+            className="px-4 py-2 bg-red-600 rounded"
+          >
+            Search
+          </button>
+        </div>
+
+        {/* LAWYERS GRID */}
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-10">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div
-                key={i}
-                className="p-6 bg-ls-charcoal/40 rounded-lg-2 shadow-card border border-ls-red/10 animate-pulse"
-              >
-                <div className="h-5 bg-ls-darkgrey rounded w-2/3 mb-4"></div>
-                <div className="h-4 bg-ls-darkgrey rounded w-1/2 mb-3"></div>
-                <div className="h-4 bg-ls-darkgrey rounded w-1/3"></div>
-              </div>
-            ))}
-          </div>
+          <div className="mt-10">Loading lawyers...</div>
         ) : (
-          // Final Grid
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-10">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
             {lawyers.map((l) => (
               <LawyerCard key={l._id} lawyer={l} />
             ))}
