@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useContext, useState, useEffect } from "react";
+import { useContext, useState, useEffect, useRef } from "react";
 import { AuthContext } from "../context/AuthContext";
 import {
   getMyNotifications,
@@ -8,9 +8,13 @@ import {
 
 export default function Navbar() {
   const { user, logout } = useContext(AuthContext);
+
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
+
+  const previousCountRef = useRef(0);
+  const audioRef = useRef(null);
 
   /* ================= PATHS ================= */
   const dashboardPath =
@@ -31,20 +35,34 @@ export default function Navbar() {
       : "/";
 
   /* ================= LOAD NOTIFICATIONS ================= */
-  useEffect(() => {
-    if (user) {
-      loadNotifications();
-    }
-  }, [user]);
-
   const loadNotifications = async () => {
     try {
       const data = await getMyNotifications();
+
+      // 🔊 Play sound if new notification arrived
+      if (previousCountRef.current && data.length > previousCountRef.current) {
+        audioRef.current?.play();
+      }
+
+      previousCountRef.current = data.length;
       setNotifications(data);
     } catch (err) {
       console.error("Notification fetch failed", err);
     }
   };
+
+  /* ================= AUTO REFRESH EVERY 10s ================= */
+  useEffect(() => {
+    if (!user) return;
+
+    loadNotifications();
+
+    const interval = setInterval(() => {
+      loadNotifications();
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [user]);
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
@@ -53,7 +71,7 @@ export default function Navbar() {
     loadNotifications();
   };
 
-  /* ================= NOTIFICATION BELL COMPONENT ================= */
+  /* ================= NOTIFICATION BELL ================= */
   const NotificationBell = () => (
     <div className="relative">
       <button
@@ -105,6 +123,9 @@ export default function Navbar() {
 
   return (
     <header className="w-full fixed top-0 z-50 bg-black/70 backdrop-blur-xl border-b border-red-600/30">
+      {/* 🔊 Hidden Audio Element */}
+      <audio ref={audioRef} src="/notification.mp3" preload="auto" />
+
       <div className="max-w-7xl mx-auto flex items-center justify-between py-4 px-6">
 
         {/* LOGO */}
@@ -118,7 +139,7 @@ export default function Navbar() {
         {/* DESKTOP NAV */}
         <nav className="hidden md:flex items-center gap-8 text-gray-200">
 
-          {/* ================= CLIENT NAV ================= */}
+          {/* CLIENT NAV */}
           {user?.role === "client" && (
             <>
               <Link to="/search-lawyers" className="hover:text-red-500 transition">
@@ -141,7 +162,7 @@ export default function Navbar() {
             </>
           )}
 
-          {/* ================= LAWYER NAV ================= */}
+          {/* LAWYER NAV */}
           {user?.role === "lawyer" && (
             <>
               <Link to={dashboardPath} className="hover:text-red-500 transition">
@@ -164,7 +185,7 @@ export default function Navbar() {
             </>
           )}
 
-          {/* ================= PUBLIC NAV ================= */}
+          {/* PUBLIC NAV */}
           {!user && (
             <>
               <Link to="/login" className="hover:text-red-500 transition">
@@ -176,7 +197,7 @@ export default function Navbar() {
             </>
           )}
 
-          {/* ================= LOGOUT ================= */}
+          {/* LOGOUT */}
           {user && (
             <button
               onClick={logout}
@@ -202,16 +223,12 @@ export default function Navbar() {
           <div className="px-6 py-4 space-y-4 text-gray-200">
 
             {user && (
-              <>
-                <button
-                  onClick={() => {
-                    setShowDropdown(!showDropdown);
-                  }}
-                  className="block"
-                >
-                  🔔 Notifications ({unreadCount})
-                </button>
-              </>
+              <button
+                onClick={() => setShowDropdown(!showDropdown)}
+                className="block"
+              >
+                🔔 Notifications ({unreadCount})
+              </button>
             )}
 
             {user?.role === "client" && (
