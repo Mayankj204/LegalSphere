@@ -5,6 +5,7 @@ import { getLawyerById } from "../services/lawyerService";
 export default function LawyerProfile() {
   const { id } = useParams();
   const [lawyer, setLawyer] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchLawyer = async () => {
@@ -12,88 +13,74 @@ export default function LawyerProfile() {
         const data = await getLawyerById(id);
         setLawyer(data);
       } catch (err) {
-        console.error("Failed to fetch lawyer", err);
+        console.error(err);
       }
+      setLoading(false);
     };
+
     fetchLawyer();
   }, [id]);
 
-  if (!lawyer)
+  if (loading) {
     return (
       <div className="pt-32 text-center text-gray-400">
-        Loading profile...
+        Loading lawyer profile...
       </div>
     );
+  }
+
+  if (!lawyer) {
+    return (
+      <div className="pt-32 text-center text-red-500">
+        Lawyer not found
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-black text-white pt-32 px-4">
-      <div className="max-w-4xl mx-auto">
+    <div className="pt-28 pb-20 px-6">
+      <div className="max-w-3xl mx-auto bg-ls-charcoal/60 backdrop-blur-xl border border-ls-red/20 rounded-xl p-8 shadow-lg text-center">
 
-        {/* Profile Card */}
-        <div className="bg-[#111] border border-red-600/30 rounded-2xl shadow-xl p-8">
-
-          {/* Header */}
-          <div className="flex flex-col md:flex-row items-center gap-6">
-
-            {/* Avatar */}
-            <div className="w-28 h-28 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center text-3xl font-bold">
-              {lawyer.name?.charAt(0)}
-            </div>
-
-            {/* Basic Info */}
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold text-red-500">
-                {lawyer.name}
-              </h1>
-
-              <p className="text-gray-400 mt-1">
-                {lawyer.specialization}
-              </p>
-
-              <div className="mt-4 flex flex-wrap gap-4 text-sm text-gray-300">
-                <span className="bg-[#1a1a1a] px-3 py-1 rounded-lg border border-red-600/20">
-                  🎓 Experience: {lawyer.experience} years
-                </span>
-
-                <span className="bg-[#1a1a1a] px-3 py-1 rounded-lg border border-red-600/20">
-                  📍 {lawyer.city}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Divider */}
-          <div className="border-t border-red-600/20 my-8"></div>
-
-          {/* Contact Section */}
-          <div>
-            <h2 className="text-xl font-semibold mb-4">Contact Information</h2>
-
-            <p className="text-gray-300">
-              📧 Email:{" "}
-              <span className="text-red-400">{lawyer.email}</span>
-            </p>
-          </div>
-
-          {/* Divider */}
-          <div className="border-t border-red-600/20 my-8"></div>
-
-          {/* About Section */}
-          <div>
-            <h2 className="text-xl font-semibold mb-4">About</h2>
-
-            <p className="text-gray-400 leading-relaxed">
-              {lawyer.bio || "This lawyer has not added a bio yet."}
-            </p>
-          </div>
-
-          {/* Action Button */}
-          <div className="mt-8">
-            <button className="px-6 py-3 bg-red-600 rounded-lg hover:bg-red-700 transition shadow-lg shadow-red-600/20">
-              Contact Lawyer
-            </button>
-          </div>
+        {/* PROFILE IMAGE */}
+        <div className="flex justify-center mb-6">
+          <img
+            src={
+              lawyer.profileImage
+                ? `http://localhost:5000/uploads/${lawyer.profileImage}`
+                : "https://via.placeholder.com/200"
+            }
+            alt={lawyer.name}
+            className="w-40 h-40 rounded-full object-cover border-4 border-ls-red shadow-md"
+          />
         </div>
+
+        {/* NAME */}
+        <h1 className="text-3xl font-bold text-ls-offwhite">
+          {lawyer.name}
+        </h1>
+
+        {/* SPECIALIZATION */}
+        <p className="mt-2 text-ls-muted text-lg">
+          {lawyer.specialization}
+        </p>
+
+        {/* DETAILS */}
+        <div className="mt-6 space-y-2 text-ls-offwhite/90">
+          <p><span className="font-semibold">Experience:</span> {lawyer.experience} years</p>
+          <p><span className="font-semibold">City:</span> {lawyer.city}</p>
+          <p><span className="font-semibold">Email:</span> {lawyer.email}</p>
+          {lawyer.phone && (
+            <p><span className="font-semibold">Phone:</span> {lawyer.phone}</p>
+          )}
+        </div>
+
+        {/* BIO */}
+        {lawyer.bio && (
+          <div className="mt-6 text-ls-offwhite/80 leading-relaxed">
+            <h3 className="font-semibold mb-2 text-lg">About</h3>
+            <p>{lawyer.bio}</p>
+          </div>
+        )}
       </div>
     </div>
   );
