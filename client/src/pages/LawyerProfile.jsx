@@ -39,10 +39,11 @@ export default function LawyerProfile() {
 
   return (
     <div className="pt-28 pb-20 px-6">
-      <div className="max-w-3xl mx-auto bg-ls-charcoal/60 backdrop-blur-xl border border-ls-red/20 rounded-xl p-8 shadow-lg text-center">
+      <div className="max-w-4xl mx-auto bg-ls-charcoal/60 backdrop-blur-xl border border-ls-red/20 rounded-xl p-8 shadow-lg">
 
-        {/* PROFILE IMAGE */}
-        <div className="flex justify-center mb-6">
+        {/* HEADER */}
+        <div className="flex flex-col md:flex-row items-center gap-8">
+
           <img
             src={
               lawyer.profileImage
@@ -50,35 +51,125 @@ export default function LawyerProfile() {
                 : "https://via.placeholder.com/200"
             }
             alt={lawyer.name}
-            className="w-40 h-40 rounded-full object-cover border-4 border-ls-red shadow-md"
+            className="w-44 h-44 rounded-full object-cover border-4 border-ls-red shadow-md"
           />
+
+          <div>
+            <h1 className="text-3xl font-bold text-ls-offwhite">
+              {lawyer.name}
+              {lawyer.isVerified && (
+                <span className="ml-3 text-green-400 text-sm">
+                  ✔ Verified
+                </span>
+              )}
+            </h1>
+
+            <p className="text-ls-muted mt-1 text-lg">
+              {lawyer.specialization}
+            </p>
+
+            <p className="mt-2 text-ls-offwhite/80">
+              {lawyer.experience} Years Experience
+            </p>
+
+            <p className="text-ls-offwhite/80">
+              📍 {lawyer.city}
+            </p>
+
+            {lawyer.availability && (
+              <p className="mt-2 text-sm font-semibold text-green-400">
+                {lawyer.availability}
+              </p>
+            )}
+          </div>
         </div>
 
-        {/* NAME */}
-        <h1 className="text-3xl font-bold text-ls-offwhite">
-          {lawyer.name}
-        </h1>
+        {/* QUICK INFO */}
+        <div className="grid md:grid-cols-3 gap-6 mt-10 text-center">
+          {lawyer.consultationFee && (
+            <div className="bg-black/30 p-4 rounded-lg">
+              <p className="text-ls-muted text-sm">Consultation Fee</p>
+              <p className="text-lg font-bold text-ls-offwhite">
+                ₹{lawyer.consultationFee}
+              </p>
+            </div>
+          )}
 
-        {/* SPECIALIZATION */}
-        <p className="mt-2 text-ls-muted text-lg">
-          {lawyer.specialization}
-        </p>
+          {lawyer.casesHandled && (
+            <div className="bg-black/30 p-4 rounded-lg">
+              <p className="text-ls-muted text-sm">Cases Handled</p>
+              <p className="text-lg font-bold text-ls-offwhite">
+                {lawyer.casesHandled}+
+              </p>
+            </div>
+          )}
 
-        {/* DETAILS */}
-        <div className="mt-6 space-y-2 text-ls-offwhite/90">
-          <p><span className="font-semibold">Experience:</span> {lawyer.experience} years</p>
-          <p><span className="font-semibold">City:</span> {lawyer.city}</p>
-          <p><span className="font-semibold">Email:</span> {lawyer.email}</p>
-          {lawyer.phone && (
-            <p><span className="font-semibold">Phone:</span> {lawyer.phone}</p>
+          {lawyer.successRate && (
+            <div className="bg-black/30 p-4 rounded-lg">
+              <p className="text-ls-muted text-sm">Success Rate</p>
+              <p className="text-lg font-bold text-ls-offwhite">
+                {lawyer.successRate}%
+              </p>
+            </div>
           )}
         </div>
 
-        {/* BIO */}
+        {/* PRACTICE AREAS */}
+        {lawyer.practiceAreas?.length > 0 && (
+          <div className="mt-10">
+            <h3 className="text-xl font-semibold text-ls-offwhite mb-3">
+              Practice Areas
+            </h3>
+            <div className="flex flex-wrap gap-3">
+              {lawyer.practiceAreas.map((area, index) => (
+                <span
+                  key={index}
+                  className="px-3 py-1 bg-ls-red/20 rounded-full text-sm text-ls-offwhite"
+                >
+                  {area}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* COURTS */}
+        {lawyer.courts?.length > 0 && (
+          <div className="mt-10">
+            <h3 className="text-xl font-semibold text-ls-offwhite mb-3">
+              Courts Practiced In
+            </h3>
+            <ul className="list-disc list-inside text-ls-offwhite/80">
+              {lawyer.courts.map((court, index) => (
+                <li key={index}>{court}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* EDUCATION */}
+        {lawyer.education?.length > 0 && (
+          <div className="mt-10">
+            <h3 className="text-xl font-semibold text-ls-offwhite mb-3">
+              Education
+            </h3>
+            <ul className="list-disc list-inside text-ls-offwhite/80">
+              {lawyer.education.map((edu, index) => (
+                <li key={index}>{edu}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* ABOUT */}
         {lawyer.bio && (
-          <div className="mt-6 text-ls-offwhite/80 leading-relaxed">
-            <h3 className="font-semibold mb-2 text-lg">About</h3>
-            <p>{lawyer.bio}</p>
+          <div className="mt-10">
+            <h3 className="text-xl font-semibold text-ls-offwhite mb-3">
+              About
+            </h3>
+            <p className="text-ls-offwhite/80 leading-relaxed">
+              {lawyer.bio}
+            </p>
           </div>
         )}
       </div>

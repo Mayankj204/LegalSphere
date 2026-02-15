@@ -4,29 +4,33 @@ import { AuthContext } from "./context/AuthContext";
 
 import Navbar from "./components/Navbar";
 import CollapsibleSidebar from "./components/CollapsibleSidebar";
+import ProtectedRoute from "./components/ProtectedRoute";
 
+/* PUBLIC PAGES */
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-
-import DashboardClient from "./pages/DashboardClient";
-import DashboardLawyer from "./pages/DashboardLawyer";
-
 import SearchLawyers from "./pages/SearchLawyers";
 import LawyerProfile from "./pages/LawyerProfile";
 
+/* DASHBOARDS */
+import DashboardClient from "./pages/DashboardClient";
+import DashboardLawyer from "./pages/DashboardLawyer";
+
+/* PROFILE SETTINGS */
+import ClientAccountSettings from "./pages/ClientAccountSettings";
+import LawyerAccountSettings from "./pages/LawyerAccountSettings";
+
+/* CASE & WORKSPACE */
 import CaseDetails from "./pages/CaseDetails";
-
-import AIWorkspace from "./pages/AIWorkspace";
 import CaseWorkspace from "./pages/CaseWorkspace";
+import AIWorkspace from "./pages/AIWorkspace";
 
+/* UTILITIES */
 import UpcomingHearings from "./pages/UpcomingHearings";
 import CalendarView from "./pages/CalendarView";
 import TasksReminders from "./pages/TasksReminders";
-
 import GlobalAIChat from "./pages/GlobalAIChat";
-
-import ProtectedRoute from "./components/ProtectedRoute";
 
 export default function App() {
   const [sidebarWidth, setSidebarWidth] = useState(256);
@@ -37,7 +41,6 @@ export default function App() {
       {/* NAVBAR */}
       <Navbar />
 
-     
       {/* SIDEBAR ONLY FOR LAWYERS */}
       {user?.role === "lawyer" && (
         <CollapsibleSidebar onWidthChange={(w) => setSidebarWidth(w)} />
@@ -50,16 +53,15 @@ export default function App() {
           marginLeft: user?.role === "lawyer" ? `${sidebarWidth}px` : "0px",
         }}
       >
-
         <Routes>
-          {/* PUBLIC ROUTES */}
+          {/* ================= PUBLIC ROUTES ================= */}
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/search-lawyers" element={<SearchLawyers />} />
           <Route path="/lawyer/:id" element={<LawyerProfile />} />
 
-          {/* PROTECTED ROUTES */}
+          {/* ================= CLIENT ROUTES ================= */}
           <Route
             path="/dashboard-client"
             element={
@@ -70,6 +72,16 @@ export default function App() {
           />
 
           <Route
+            path="/client/settings"
+            element={
+              <ProtectedRoute role="client">
+                <ClientAccountSettings />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* ================= LAWYER ROUTES ================= */}
+          <Route
             path="/dashboard-lawyer"
             element={
               <ProtectedRoute role="lawyer">
@@ -79,10 +91,10 @@ export default function App() {
           />
 
           <Route
-            path="/ai-assistant"
+            path="/lawyer/settings"
             element={
-              <ProtectedRoute>
-                <GlobalAIChat />
+              <ProtectedRoute role="lawyer">
+                <LawyerAccountSettings />
               </ProtectedRoute>
             }
           />
@@ -92,6 +104,16 @@ export default function App() {
             element={
               <ProtectedRoute role="lawyer">
                 <AIWorkspace />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* ================= COMMON PROTECTED ROUTES ================= */}
+          <Route
+            path="/ai-assistant"
+            element={
+              <ProtectedRoute>
+                <GlobalAIChat />
               </ProtectedRoute>
             }
           />
@@ -141,9 +163,14 @@ export default function App() {
             }
           />
 
+          {/* ================= 404 ================= */}
           <Route
             path="*"
-            element={<h1 className="p-10">404 - Page Not Found</h1>}
+            element={
+              <h1 className="p-10 text-2xl font-bold text-center">
+                404 - Page Not Found
+              </h1>
+            }
           />
         </Routes>
       </div>

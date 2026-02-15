@@ -25,6 +25,16 @@ const schema = yup.object().shape({
     is: "lawyer",
     then: (schema) => schema.required("City required"),
   }),
+
+  barCouncilId: yup.string().when("role", {
+    is: "lawyer",
+    then: (schema) => schema.required("Bar Council ID required"),
+  }),
+
+  consultationFee: yup.number().when("role", {
+    is: "lawyer",
+    then: (schema) => schema.required("Consultation fee required"),
+  }),
 });
 
 export default function Register() {
@@ -44,6 +54,10 @@ export default function Register() {
   const selectedRole = watch("role");
 
   const onSubmit = async (data) => {
+    if (data.languages) {
+      data.languages = data.languages.split(",").map((l) => l.trim());
+    }
+
     const res = await registerUser(data);
 
     if (res?.role === "lawyer") {
@@ -52,6 +66,11 @@ export default function Register() {
       navigate("/dashboard-client");
     }
   };
+
+  const inputStyle =
+    "w-full mt-1 p-3 bg-black/60 text-white border border-red-600/20 rounded-lg focus:outline-none focus:border-red-600";
+
+  const errorStyle = "text-sm text-red-400 mt-1";
 
   return (
     <div className="flex justify-center pt-32 px-4">
@@ -66,103 +85,99 @@ export default function Register() {
         {/* NAME */}
         <div className="mt-6">
           <label className="text-gray-300 text-sm">Full Name</label>
-          <input
-            {...register("name")}
-            className="w-full mt-1 p-3 bg-black/60 text-white border border-red-600/20 rounded-lg focus:outline-none focus:border-red-600"
-          />
-          {errors.name && (
-            <p className="text-sm text-red-400 mt-1">
-              {errors.name.message}
-            </p>
-          )}
+          <input {...register("name")} className={inputStyle} />
+          {errors.name && <p className={errorStyle}>{errors.name.message}</p>}
         </div>
 
         {/* EMAIL */}
         <div className="mt-4">
           <label className="text-gray-300 text-sm">Email</label>
-          <input
-            {...register("email")}
-            className="w-full mt-1 p-3 bg-black/60 text-white border border-red-600/20 rounded-lg focus:outline-none focus:border-red-600"
-          />
-          {errors.email && (
-            <p className="text-sm text-red-400 mt-1">
-              {errors.email.message}
-            </p>
-          )}
+          <input {...register("email")} className={inputStyle} />
+          {errors.email && <p className={errorStyle}>{errors.email.message}</p>}
         </div>
 
         {/* PASSWORD */}
         <div className="mt-4">
           <label className="text-gray-300 text-sm">Password</label>
-          <input
-            type="password"
-            {...register("password")}
-            className="w-full mt-1 p-3 bg-black/60 text-white border border-red-600/20 rounded-lg focus:outline-none focus:border-red-600"
-          />
+          <input type="password" {...register("password")} className={inputStyle} />
           {errors.password && (
-            <p className="text-sm text-red-400 mt-1">
-              {errors.password.message}
-            </p>
+            <p className={errorStyle}>{errors.password.message}</p>
           )}
         </div>
 
         {/* ROLE */}
         <div className="mt-4">
           <label className="text-gray-300 text-sm">Register As</label>
-          <select
-            {...register("role")}
-            className="w-full mt-1 p-3 bg-black/60 text-white border border-red-600/20 rounded-lg focus:outline-none focus:border-red-600"
-          >
+          <select {...register("role")} className={inputStyle}>
             <option value="client">Client</option>
             <option value="lawyer">Lawyer</option>
           </select>
         </div>
 
-        {/* LAWYER EXTRA FIELDS */}
         {selectedRole === "lawyer" && (
           <>
             <div className="mt-4">
-              <label className="text-gray-300 text-sm">
-                Specialization
-              </label>
-              <input
-                {...register("specialization")}
-                className="w-full mt-1 p-3 bg-black/60 text-white border border-red-600/20 rounded-lg focus:outline-none focus:border-red-600"
-              />
+              <label className="text-gray-300 text-sm">Specialization</label>
+              <input {...register("specialization")} className={inputStyle} />
               {errors.specialization && (
-                <p className="text-sm text-red-400 mt-1">
-                  {errors.specialization.message}
-                </p>
+                <p className={errorStyle}>{errors.specialization.message}</p>
               )}
             </div>
 
             <div className="mt-4">
-              <label className="text-gray-300 text-sm">
-                Experience (Years)
-              </label>
-              <input
-                type="number"
-                {...register("experience")}
-                className="w-full mt-1 p-3 bg-black/60 text-white border border-red-600/20 rounded-lg focus:outline-none focus:border-red-600"
-              />
+              <label className="text-gray-300 text-sm">Experience (Years)</label>
+              <input type="number" {...register("experience")} className={inputStyle} />
               {errors.experience && (
-                <p className="text-sm text-red-400 mt-1">
-                  {errors.experience.message}
-                </p>
+                <p className={errorStyle}>{errors.experience.message}</p>
               )}
             </div>
 
             <div className="mt-4">
               <label className="text-gray-300 text-sm">City</label>
-              <input
-                {...register("city")}
-                className="w-full mt-1 p-3 bg-black/60 text-white border border-red-600/20 rounded-lg focus:outline-none focus:border-red-600"
-              />
-              {errors.city && (
-                <p className="text-sm text-red-400 mt-1">
-                  {errors.city.message}
-                </p>
+              <input {...register("city")} className={inputStyle} />
+              {errors.city && <p className={errorStyle}>{errors.city.message}</p>}
+            </div>
+
+            <div className="mt-4">
+              <label className="text-gray-300 text-sm">Bar Council ID</label>
+              <input {...register("barCouncilId")} className={inputStyle} />
+              {errors.barCouncilId && (
+                <p className={errorStyle}>{errors.barCouncilId.message}</p>
               )}
+            </div>
+
+            <div className="mt-4">
+              <label className="text-gray-300 text-sm">
+                Consultation Fee (₹)
+              </label>
+              <input
+                type="number"
+                {...register("consultationFee")}
+                className={inputStyle}
+              />
+              {errors.consultationFee && (
+                <p className={errorStyle}>{errors.consultationFee.message}</p>
+              )}
+            </div>
+
+            <div className="mt-4">
+              <label className="text-gray-300 text-sm">
+                Languages (comma separated)
+              </label>
+              <input
+                placeholder="English, Hindi"
+                {...register("languages")}
+                className={inputStyle}
+              />
+            </div>
+
+            <div className="mt-4">
+              <label className="text-gray-300 text-sm">Availability</label>
+              <select {...register("availability")} className={inputStyle}>
+                <option value="Available">Available</option>
+                <option value="Busy">Busy</option>
+                <option value="Unavailable">Unavailable</option>
+              </select>
             </div>
           </>
         )}
@@ -173,6 +188,20 @@ export default function Register() {
         >
           {isSubmitting ? "Registering..." : "Register"}
         </button>
+
+        {/* Redirect to Login */}
+        <div className="mt-6 text-center">
+          <p className="text-gray-400 text-sm">
+            Already have an account?
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate("/login")}
+            className="mt-2 text-red-500 hover:text-red-400 transition font-semibold"
+          >
+            Login here
+          </button>
+        </div>
       </form>
     </div>
   );
