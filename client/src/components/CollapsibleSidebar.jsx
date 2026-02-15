@@ -12,10 +12,9 @@ export default function CollapsibleSidebar({ onWidthChange }) {
   // 🔒 Only show for lawyers
   if (!user || user.role !== "lawyer") return null;
 
-  // Notify parent whenever width changes
   useEffect(() => {
     onWidthChange(open ? 256 : 64);
-  }, [open]);
+  }, [open, onWidthChange]);
 
   const navItem = (path, label, icon) => {
     const active = location.pathname === path;
@@ -27,7 +26,7 @@ export default function CollapsibleSidebar({ onWidthChange }) {
         ${
           active
             ? "bg-red-600 text-white shadow-lg shadow-red-600/20"
-            : "bg-[#111] hover:bg-[#1a1a1a] border border-red-600/20"
+            : "bg-[#111] hover:bg-[#1a1a1a] border border-red-600/20 text-gray-300"
         }`}
       >
         <span className="text-lg">{icon}</span>
@@ -35,6 +34,8 @@ export default function CollapsibleSidebar({ onWidthChange }) {
       </button>
     );
   };
+
+  const isAccountActive = location.pathname === "/lawyer/settings";
 
   return (
     <div
@@ -64,32 +65,47 @@ export default function CollapsibleSidebar({ onWidthChange }) {
 
         {/* NAVIGATION */}
         <nav className="mt-4 space-y-2 px-2">
-          {navItem("/dashboard-lawyer", "Home", "🏠")}
+          {navItem("/dashboard-lawyer", "Dashboard", "🏠")}
           {navItem("/workspace", "AI Workspace", "🤖")}
           {navItem("/hearings", "Hearings", "🔔")}
           {navItem("/calendar", "Calendar", "📅")}
           {navItem("/tasks", "Tasks", "📝")}
-          {navItem("/profile-lawyer", "Profile", "👤")}
         </nav>
       </div>
 
       {/* FOOTER / PROFILE SECTION */}
       <div className="p-4 border-t border-red-600/20">
-        {open && (
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center font-bold">
+
+        {/* 🔥 Clickable Profile Section */}
+        <button
+          onClick={() => navigate("/lawyer/settings")}
+          className={`w-full text-left p-3 rounded-lg transition mb-4
+          ${
+            isAccountActive
+              ? "bg-red-600 text-white shadow-lg shadow-red-600/20"
+              : "hover:bg-[#111] text-gray-300"
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center font-bold text-white">
               {user.name?.charAt(0)}
             </div>
-            <div>
-              <p className="text-sm font-semibold">{user.name}</p>
-              <p className="text-xs text-gray-400">Lawyer</p>
-            </div>
-          </div>
-        )}
 
+            {open && (
+              <div>
+                <p className="text-sm font-semibold text-white">
+                  {user.name}
+                </p>
+                <p className="text-xs text-gray-400">Lawyer Account</p>
+              </div>
+            )}
+          </div>
+        </button>
+
+        {/* Logout Button */}
         <button
           onClick={logout}
-          className="w-full px-3 py-2 bg-red-700 hover:bg-red-800 rounded-lg text-sm transition"
+          className="w-full px-3 py-2 bg-red-700 hover:bg-red-800 rounded-lg text-sm transition text-white"
         >
           {open ? "Logout" : "🚪"}
         </button>

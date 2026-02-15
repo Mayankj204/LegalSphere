@@ -85,7 +85,7 @@ export default function LawyerAccountSettings() {
 
   return (
     <PageTransition>
-      <div className="pt-32 pb-20 px-6">
+      <div className="pt-3 pb-20 px-6">
         <div className="max-w-6xl mx-auto grid lg:grid-cols-3 gap-10">
 
           {/* PROFILE CARD */}
