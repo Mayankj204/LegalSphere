@@ -14,7 +14,6 @@ export default function CaseDetails() {
   const [loadingDocs, setLoadingDocs] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  // Rename / Edit modal state
   const [showEdit, setShowEdit] = useState(false);
   const [editDoc, setEditDoc] = useState(null);
   const [editFilename, setEditFilename] = useState("");
@@ -23,16 +22,13 @@ export default function CaseDetails() {
   useEffect(() => {
     loadCase();
     loadDocuments();
-    // eslint-disable-next-line
   }, [caseId]);
 
   const loadCase = async () => {
     try {
       const res = await workspaceService.getCaseById(caseId);
       setCaseData(res);
-    } catch (err) {
-      console.error("Failed to load case:", err);
-    }
+    } catch (err) { console.error("Load failed:", err); }
   };
 
   const loadDocuments = async () => {
@@ -40,12 +36,8 @@ export default function CaseDetails() {
     try {
       const docs = await workspaceService.getCaseDocuments(caseId);
       setDocuments(docs || []);
-    } catch (err) {
-      console.error("Failed to load documents:", err);
-      setDocuments([]);
-    } finally {
-      setLoadingDocs(false);
-    }
+    } catch (err) { setDocuments([]); } 
+    finally { setLoadingDocs(false); }
   };
 
   const handleUpload = async (file) => {
@@ -54,19 +46,8 @@ export default function CaseDetails() {
     try {
       await workspaceService.uploadCaseDocument(caseId, file);
       await loadDocuments();
-    } catch (err) {
-      console.error("Upload failed:", err);
-      alert("Upload failed");
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const openEditModal = (doc) => {
-    setEditDoc(doc);
-    setEditFilename(doc.filename || "");
-    setEditTag(doc.tag || "");
-    setShowEdit(true);
+    } catch (err) { alert("Upload failed"); } 
+    finally { setUploading(false); }
   };
 
   const saveEdit = async () => {
@@ -77,201 +58,174 @@ export default function CaseDetails() {
         tag: editTag,
       });
       setShowEdit(false);
-      setEditDoc(null);
       await loadDocuments();
-    } catch (err) {
-      console.error("Failed to update document:", err);
-      alert("Update failed");
-    }
+    } catch (err) { alert("Update failed"); }
   };
 
   const handleDelete = async (doc) => {
-    if (!doc) return;
-    const ok = window.confirm(`Delete document "${doc.filename}"? This cannot be undone.`);
-    if (!ok) return;
+    if (!window.confirm(`Permanently purge "${doc.filename}" from vault?`)) return;
     try {
       await workspaceService.deleteCaseDocument(caseId, doc._id);
       await loadDocuments();
-    } catch (err) {
-      console.error("Delete failed:", err);
-      alert("Delete failed");
-    }
+    } catch (err) { alert("Delete failed"); }
   };
 
-  if (!caseData) {
-    return (
-      <div className="p-6">
-        <div className="text-gray-400">Loading case...</div>
-      </div>
-    );
-  }
+  const openEditModal = (doc) => {
+    setEditDoc(doc);
+    setEditFilename(doc.filename);
+    setEditTag(doc.tag || "");
+    setShowEdit(true);
+  };
+
+  if (!caseData) return <div className="p-10 text-gray-500 font-mono text-[10px] animate-pulse uppercase tracking-[0.4em]">Establishing Secure Link...</div>;
 
   return (
-    <div className="p-6">
-      {/* CASE HEADER */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold mb-1">{caseData.title}</h1>
-          <p className="text-gray-300">
-            <strong>Client:</strong> {caseData.clientName || caseData.clientId}
-          </p>
-          <p className="text-gray-300">
-            <strong>Status:</strong> {caseData.status}
-          </p>
-          <p className="text-gray-300 mb-2">
-            <strong>Court:</strong> {caseData.court || "N/A"}
-          </p>
+    <div className="min-h-screen bg-[#050505] text-slate-200 font-sans selection:bg-red-500/30 pb-20">
+      
+      {/* CASE MASTER STRIP */}
+      <div className="relative bg-[#0A0A0A] border-b border-white/5 p-8 md:px-12 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div className="relative z-10">
+          <div className="flex items-center gap-4 mb-2">
+            <div className="w-1.5 h-6 bg-red-600 rounded-full shadow-[0_0_15px_rgba(220,38,38,0.6)]" />
+            <h1 className="text-4xl font-black tracking-tighter text-white uppercase">{caseData.title}</h1>
+          </div>
+          
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[9px] font-mono uppercase tracking-[0.2em] text-gray-600">
+            <span className="text-slate-400">CLIENT: {caseData.clientName || caseData.clientId}</span>
+            <span className="text-gray-800">/</span>
+            <span className={`font-bold ${caseData.status === 'Closed' ? 'text-gray-500' : 'text-red-500 animate-pulse'}`}>STATUS: {caseData.status}</span>
+            <span className="text-gray-800">/</span>
+            <span className="text-gray-500 font-bold">CASE_REF: #{caseId.substring(0, 8).toUpperCase()}</span>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           {caseData.confidential && (
-            <span className="px-3 py-1 bg-red-700/20 text-red-300 rounded text-sm border border-red-600/30">
-              Confidential
-            </span>
+            <div className="flex items-center gap-2 px-4 py-1.5 bg-red-600/5 border border-red-600/30 rounded-xl">
+              <div className="w-1 h-1 bg-red-600 rounded-full animate-ping" />
+              <span className="text-[9px] font-black text-red-500 uppercase tracking-[0.2em]">Restricted Access</span>
+            </div>
           )}
-
-          <button
+          <button 
             onClick={() => navigate(`/case/${caseId}/workspace`)}
-            className="px-4 py-2 bg-red-600 rounded hover:bg-red-700"
+            className="bg-red-600 hover:bg-red-500 text-white px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-red-600/20 active:scale-95"
           >
-            Open Workspace
+            Launch Case Node
           </button>
         </div>
       </div>
 
-      {/* DOCUMENT MANAGEMENT */}
-      <div className="p-4 bg-[#0f0f0f] rounded border border-red-600/30 mt-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Case Documents</h2>
+      <main className="max-w-[1600px] mx-auto px-8 md:px-12 py-12 grid lg:grid-cols-12 gap-10">
+        
+        {/* LEFT COLUMN: EVIDENCE VAULT */}
+        <div className="lg:col-span-8 space-y-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-white tracking-tight">Discovery Vault</h2>
+              <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-1">Immutable Evidence Storage for RAG-Analysis</p>
+            </div>
 
-          <div className="flex items-center gap-3">
-            <label className="cursor-pointer bg-red-700 px-3 py-2 rounded text-sm flex items-center gap-2">
-              {uploading ? "Uploading..." : "Upload Document"}
-              <input
-                type="file"
-                accept=".pdf,.txt,.doc,.docx"
-                className="hidden"
-                onChange={(e) => e.target.files[0] && handleUpload(e.target.files[0])}
-              />
-            </label>
-
-            <button
-              onClick={loadDocuments}
-              className="px-3 py-2 bg-[#111] rounded border border-red-600/20 text-sm hover:bg-[#222]"
-            >
-              Refresh
-            </button>
+            <div className="flex items-center gap-3">
+              <label className="cursor-pointer bg-white/5 border border-white/10 hover:border-red-600/50 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all text-gray-400 hover:text-white shadow-lg">
+                {uploading ? "Encrypting..." : "Add Evidence Node"}
+                <input type="file" accept=".pdf,.txt,.doc,.docx" className="hidden" onChange={(e) => e.target.files[0] && handleUpload(e.target.files[0])} />
+              </label>
+              <button onClick={loadDocuments} className="p-3 bg-white/5 border border-white/10 rounded-2xl text-gray-500 hover:text-red-500 transition-colors shadow-lg">↻</button>
+            </div>
           </div>
-        </div>
 
-        {/* Document list */}
-        <div className="mt-6 space-y-3">
-          {loadingDocs && <div className="text-gray-400">Loading documents...</div>}
-
-          {!loadingDocs && documents.length === 0 && (
-            <div className="text-gray-400">No documents uploaded yet.</div>
-          )}
-
-          {!loadingDocs &&
-            documents.map((doc) => (
-              <div
-                key={doc._id}
-                className="p-3 bg-[#111] rounded border border-red-600/20 flex flex-col"
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="font-medium text-white">{doc.filename}</p>
-
-                    <div className="mt-1 flex items-center gap-2">
-                      {doc.tag && (
-                        <span className="text-xs px-2 py-1 bg-red-700/20 border border-red-600/30 rounded">
-                          {doc.tag}
-                        </span>
-                      )}
-
-                      <p className="text-xs text-gray-400">
-                        {new Date(doc.createdAt || doc.uploadedAt).toLocaleString()}
-                      </p>
+          {loadingDocs ? (
+            <div className="py-32 text-center font-mono text-[10px] text-gray-700 uppercase tracking-[0.5em] animate-pulse">Syncing Cryptographic Vault...</div>
+          ) : documents.length === 0 ? (
+            <div className="py-32 text-center border border-dashed border-white/5 rounded-[3rem] text-gray-700 text-xs uppercase tracking-[0.4em]">No Discovery Material Detected</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {documents.map((doc) => (
+                <div key={doc._id} className="group relative bg-[#0A0A0A] border border-white/5 rounded-[2.5rem] p-8 hover:bg-[#0F0F0F] hover:border-red-600/30 transition-all duration-500 shadow-2xl overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-red-600/[0.02] blur-[60px] rounded-full group-hover:bg-red-600/10 transition-all" />
+                  
+                  <div className="relative z-10 flex justify-between items-start mb-6">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-red-600/10 rounded-2xl flex items-center justify-center text-red-500 font-mono text-[10px] font-bold border border-red-600/20 uppercase tracking-tighter">Node</div>
+                      <div>
+                        <p className="text-sm font-bold text-white group-hover:text-red-500 transition-colors truncate w-40">{doc.filename}</p>
+                        <p className="text-[8px] text-gray-600 font-mono mt-1 uppercase">{new Date(doc.createdAt).toLocaleString()}</p>
+                      </div>
                     </div>
+                    {doc.tag && (
+                      <span className="text-[8px] px-3 py-1 bg-red-600/10 text-red-500 border border-red-600/20 rounded-lg uppercase font-black tracking-widest">
+                        {doc.tag}
+                      </span>
+                    )}
                   </div>
 
-                  <div className="flex gap-2">
-                    <a
-                      href={doc.storageUrl || "#"}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="px-3 py-1 bg-red-600 rounded text-sm hover:bg-red-700"
-                    >
-                      View
-                    </a>
+                  {doc.summary && (
+                    <div className="mb-8 p-5 bg-white/[0.02] border border-white/5 rounded-2xl">
+                      <p className="text-[8px] uppercase font-black text-gray-700 mb-3 tracking-widest border-b border-white/5 pb-2">AI Neural Summary</p>
+                      <p className="text-xs text-gray-400 leading-relaxed italic line-clamp-3">{doc.summary}</p>
+                    </div>
+                  )}
 
-                    <button
-                      onClick={() => openEditModal(doc)}
-                      className="px-3 py-1 bg-[#333] border border-red-600/40 rounded text-sm hover:bg-[#444]"
-                    >
-                      Edit
-                    </button>
-
-                    <button
-                      onClick={() => handleDelete(doc)}
-                      className="px-3 py-1 bg-red-700 rounded text-sm hover:bg-red-800"
-                    >
-                      Delete
-                    </button>
+                  <div className="relative z-10 flex gap-6 pt-6 border-t border-white/5">
+                    <a href={doc.storageUrl} target="_blank" rel="noreferrer" className="text-[9px] font-black text-gray-600 hover:text-white uppercase tracking-[0.2em] transition-colors">Access File</a>
+                    <button onClick={() => openEditModal(doc)} className="text-[9px] font-black text-gray-600 hover:text-white uppercase tracking-[0.2em] transition-colors">Metadata</button>
+                    <button onClick={() => handleDelete(doc)} className="text-[9px] font-black text-red-900/40 hover:text-red-500 uppercase tracking-[0.2em] ml-auto transition-colors">Purge Node</button>
                   </div>
                 </div>
-
-                {doc.summary && (
-                  <p className="mt-3 text-gray-300 text-sm">
-                    <strong>Summary:</strong> {doc.summary}
-                  </p>
-                )}
-              </div>
-            ))}
-        </div>
-      </div>
-
-      {/* EDIT / RENAME MODAL */}
-      {showEdit && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div className="p-6 bg-[#111] rounded border border-red-600/30 w-80">
-            <h3 className="text-lg font-semibold mb-3">Edit Document</h3>
-
-            <label className="text-xs text-gray-400">Filename</label>
-            <input
-              className="w-full p-2 bg-[#0d0d0d] border border-red-600/20 rounded text-white mb-3"
-              value={editFilename}
-              onChange={(e) => setEditFilename(e.target.value)}
-            />
-
-            <label className="text-xs text-gray-400">Tag</label>
-            <select
-              value={editTag}
-              onChange={(e) => setEditTag(e.target.value)}
-              className="w-full p-2 bg-[#0d0d0d] border border-red-600/20 rounded text-white mb-4"
-            >
-              <option value="">Select Tag</option>
-              {TAG_OPTIONS.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
               ))}
-            </select>
+            </div>
+          )}
+        </div>
 
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => {
-                  setShowEdit(false);
-                  setEditDoc(null);
-                }}
-                className="px-3 py-2 bg-[#333] rounded hover:bg-[#444]"
-              >
-                Cancel
-              </button>
+        {/* RIGHT COLUMN: CASE METRICS & TOOLS */}
+        <aside className="lg:col-span-4 space-y-8">
+          <div className="bg-[#0A0A0A] border border-white/5 rounded-[2.5rem] p-10 shadow-2xl relative overflow-hidden">
+             <div className="absolute top-0 right-0 p-8 text-[40px] text-white/[0.02] font-black select-none uppercase">ID</div>
+             <h3 className="text-[10px] font-black text-gray-600 uppercase tracking-[0.3em] mb-8 border-b border-white/5 pb-4">Session Parameters</h3>
+             <div className="space-y-6">
+                <div>
+                  <label className="text-[9px] uppercase font-bold text-gray-700 block mb-1">Assigned Jurisdiction</label>
+                  <p className="text-sm text-white font-medium">{caseData.court || "UNSPECIFIED"}</p>
+                </div>
+                <div>
+                  <label className="text-[9px] uppercase font-bold text-gray-700 block mb-1">Data Volume</label>
+                  <p className="text-sm text-white font-medium font-mono">{documents.length} Evidence Nodes</p>
+                </div>
+                <div>
+                   <label className="text-[9px] uppercase font-bold text-gray-700 block mb-1">Security Level</label>
+                   <span className="text-[10px] font-black text-red-500 uppercase tracking-widest">{caseData.confidential ? "RESTRICTED (AES_256)" : "STANDARD"}</span>
+                </div>
+             </div>
+          </div>
 
-              <button onClick={saveEdit} className="px-3 py-2 bg-red-600 rounded hover:bg-red-700">
-                Save
-              </button>
+          <div className="p-8 bg-red-600/5 border border-red-600/10 rounded-[2.5rem] text-center">
+            <p className="text-xs text-gray-500 font-medium mb-4 italic">"Proprietary AI Synthesis ready for cross-referencing."</p>
+            <button className="w-full py-4 bg-white/5 hover:bg-white/10 text-white rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] transition-all">Export Analysis Brief</button>
+          </div>
+        </aside>
+      </main>
+
+      {/* EDIT OVERLAY */}
+      {showEdit && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-xl flex items-center justify-center z-[100] p-6">
+          <div className="bg-[#0A0A0A] border border-white/10 w-full max-w-sm rounded-[3rem] p-10 shadow-2xl">
+            <h3 className="text-2xl font-light text-white mb-10 tracking-tighter uppercase">Modify Metadata</h3>
+            <div className="space-y-8">
+              <div>
+                <label className="text-[9px] uppercase font-black text-gray-600 mb-2 block ml-1 tracking-[0.2em]">Archive Identifier</label>
+                <input className="w-full p-4 bg-black border border-white/5 rounded-2xl text-sm text-white focus:border-red-600 outline-none transition-all" value={editFilename} onChange={(e) => setEditFilename(e.target.value)} />
+              </div>
+              <div>
+                <label className="text-[9px] uppercase font-black text-gray-600 mb-2 block ml-1 tracking-[0.2em]">Security Protocol</label>
+                <select value={editTag} onChange={(e) => setEditTag(e.target.value)} className="w-full p-4 bg-black border border-white/5 rounded-2xl text-sm text-white focus:border-red-600 outline-none appearance-none">
+                  <option value="">UNCLASSIFIED</option>
+                  {TAG_OPTIONS.map(t => <option key={t} value={t}>{t.toUpperCase()}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="mt-12 flex flex-col gap-3">
+              <button onClick={saveEdit} className="w-full py-4 bg-red-600 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-red-500 shadow-xl shadow-red-600/20 transition-all">Commit Changes</button>
+              <button onClick={() => setShowEdit(false)} className="w-full py-4 text-[10px] font-black text-gray-600 hover:text-white uppercase tracking-[0.2em]">Discard</button>
             </div>
           </div>
         </div>

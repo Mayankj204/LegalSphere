@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+// src/components/Navbar.jsx
+import { Link, useLocation } from "react-router-dom";
 import { useContext, useState, useEffect, useRef } from "react";
 import { AuthContext } from "../context/AuthContext";
 import {
@@ -8,6 +9,7 @@ import {
 
 export default function Navbar() {
   const { user, logout } = useContext(AuthContext);
+  const { pathname } = useLocation();
 
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
@@ -17,50 +19,28 @@ export default function Navbar() {
   const audioRef = useRef(null);
 
   /* ================= PATHS ================= */
-  const dashboardPath =
-    user?.role === "lawyer"
-      ? "/dashboard-lawyer"
-      : "/dashboard-client";
-
-  const profilePath =
-    user?.role === "lawyer"
-      ? "/lawyer/settings"
-      : "/client/settings";
-
-  const logoRedirect =
-    user?.role === "lawyer"
-      ? "/dashboard-lawyer"
-      : user?.role === "client"
-      ? "/dashboard-client"
-      : "/";
+  const dashboardPath = user?.role === "lawyer" ? "/dashboard-lawyer" : "/dashboard-client";
+  const profilePath = user?.role === "lawyer" ? "/lawyer/settings" : "/client/settings";
+  const logoRedirect = user ? dashboardPath : "/";
 
   /* ================= LOAD NOTIFICATIONS ================= */
   const loadNotifications = async () => {
     try {
       const data = await getMyNotifications();
-
-      // 🔊 Play sound if new notification arrived
       if (previousCountRef.current && data.length > previousCountRef.current) {
         audioRef.current?.play();
       }
-
       previousCountRef.current = data.length;
-      setNotifications(data);
+      setNotifications(data || []);
     } catch (err) {
-      console.error("Notification fetch failed", err);
+      console.error("Notification sync failed", err);
     }
   };
 
-  /* ================= AUTO REFRESH EVERY 10s ================= */
   useEffect(() => {
     if (!user) return;
-
     loadNotifications();
-
-    const interval = setInterval(() => {
-      loadNotifications();
-    }, 10000);
-
+    const interval = setInterval(loadNotifications, 10000);
     return () => clearInterval(interval);
   }, [user]);
 
@@ -71,147 +51,124 @@ export default function Navbar() {
     loadNotifications();
   };
 
-  /* ================= NOTIFICATION BELL ================= */
-  const NotificationBell = () => (
-    <div className="relative">
-      <button
-        onClick={() => setShowDropdown(!showDropdown)}
-        className="relative text-xl hover:text-red-500 transition"
+  /* ================= UI COMPONENTS ================= */
+  const NavLink = ({ to, children }) => {
+    const isActive = pathname === to;
+    return (
+      <Link 
+        to={to} 
+        className={`text-sm font-medium transition-all duration-300 hover:text-red-500 relative py-1 ${
+          isActive ? "text-white" : "text-gray-400"
+        }`}
       >
-        🔔
-        {unreadCount > 0 && (
-          <span className="absolute -top-2 -right-2 bg-red-600 text-xs px-2 py-0.5 rounded-full">
-            {unreadCount}
-          </span>
+        {children}
+        {isActive && (
+          <div className="absolute -bottom-1 left-0 w-full h-0.5 bg-red-600 rounded-full shadow-[0_0_8px_rgba(220,38,38,0.5)]" />
         )}
-      </button>
-
-      {showDropdown && (
-        <div className="absolute right-0 mt-4 w-80 bg-[#111] border border-red-600/30 rounded-xl shadow-lg p-4 z-50">
-          <h3 className="font-semibold mb-3 text-white">
-            Notifications
-          </h3>
-
-          {notifications.length === 0 ? (
-            <p className="text-gray-400 text-sm">
-              No notifications yet
-            </p>
-          ) : (
-            <div className="space-y-3 max-h-80 overflow-y-auto">
-              {notifications.map((n) => (
-                <div
-                  key={n._id}
-                  onClick={() => handleNotificationClick(n._id)}
-                  className={`p-3 rounded-lg cursor-pointer transition ${
-                    n.isRead
-                      ? "bg-[#1a1a1a]"
-                      : "bg-red-600/10 border border-red-600/30"
-                  }`}
-                >
-                  <p className="text-sm">{n.message}</p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    {new Date(n.createdAt).toLocaleString()}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
+      </Link>
+    );
+  };
 
   return (
-    <header className="w-full fixed top-0 z-50 bg-black/70 backdrop-blur-xl border-b border-red-600/30">
-      {/* 🔊 Hidden Audio Element */}
+    <header className="w-full fixed top-0 z-[100] bg-black/80 backdrop-blur-xl border-b border-white/5">
       <audio ref={audioRef} src="/notification.mp3" preload="auto" />
 
-      <div className="max-w-7xl mx-auto flex items-center justify-between py-4 px-6">
-
+      <div className="max-w-7xl mx-auto flex items-center justify-between h-20 px-6">
+        
         {/* LOGO */}
-        <Link
-          to={logoRedirect}
-          className="text-2xl font-extrabold text-red-500 tracking-wider hover:text-red-400 transition"
-        >
-          LegalSphere
+        <Link to={logoRedirect} className="flex items-center gap-2 group">
+          <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center text-white font-bold text-sm group-hover:bg-red-500 transition-colors">
+            LS
+          </div>
+          <span className="text-xl font-bold text-white group-hover:text-red-500 transition-colors">
+            LegalSphere
+          </span>
         </Link>
 
         {/* DESKTOP NAV */}
-        <nav className="hidden md:flex items-center gap-8 text-gray-200">
-
-          {/* CLIENT NAV */}
-          {user?.role === "client" && (
+        <nav className="hidden md:flex items-center gap-8">
+          {!user ? (
             <>
-              <Link to="/search-lawyers" className="hover:text-red-500 transition">
-                Find Lawyers
-              </Link>
-
-              <Link to={dashboardPath} className="hover:text-red-500 transition">
-                Dashboard
-              </Link>
-
-              <Link to="/ai-assistant" className="hover:text-red-500 transition">
-                AI Assistant
-              </Link>
-
-              <NotificationBell />
-
-              <Link to={profilePath} className="hover:text-red-500 transition">
-                Account
+              <NavLink to="/login">Sign In</NavLink>
+              <Link 
+                to="/register" 
+                className="px-5 py-2.5 bg-red-600 hover:bg-red-500 text-white text-sm font-semibold rounded-xl transition-all active:scale-95 shadow-lg shadow-red-600/20"
+              >
+                Get Started
               </Link>
             </>
-          )}
-
-          {/* LAWYER NAV */}
-          {user?.role === "lawyer" && (
+          ) : (
             <>
-              <Link to={dashboardPath} className="hover:text-red-500 transition">
-                Dashboard
-              </Link>
+              {user.role === "client" && <NavLink to="/search-lawyers">Find a Lawyer</NavLink>}
+              <NavLink to={dashboardPath}>My Dashboard</NavLink>
+              {user.role === "lawyer" && <NavLink to="/workspace">Case Files</NavLink>}
+              <NavLink to="/ai-assistant">AI Helper</NavLink>
+              
+              <div className="h-5 w-px bg-white/10 mx-1" />
 
-              <Link to="/workspace" className="hover:text-red-500 transition">
-                Workspace
-              </Link>
+              {/* NOTIFICATION BELL */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowDropdown(!showDropdown)}
+                  className={`p-2 rounded-full transition-all ${
+                    showDropdown ? "bg-white/10 text-red-500" : "text-gray-400 hover:text-white"
+                  }`}
+                >
+                  <div className="relative text-xl">
+                    🔔
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-600 rounded-full border-2 border-black animate-pulse" />
+                    )}
+                  </div>
+                </button>
 
-              <Link to="/ai-assistant" className="hover:text-red-500 transition">
-                AI Assistant
-              </Link>
+                {showDropdown && (
+                  <div className="absolute right-0 mt-4 w-72 bg-[#111] border border-white/10 rounded-2xl shadow-2xl p-5">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-sm font-bold text-white">Latest Updates</h3>
+                      {unreadCount > 0 && <span className="text-[10px] bg-red-600/20 text-red-500 px-2 py-0.5 rounded-full">{unreadCount} New</span>}
+                    </div>
 
-              <NotificationBell />
+                    <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                      {notifications.length === 0 ? (
+                        <p className="text-xs text-gray-500 py-6 text-center">No new updates</p>
+                      ) : (
+                        notifications.map((n) => (
+                          <div
+                            key={n._id}
+                            onClick={() => handleNotificationClick(n._id)}
+                            className={`p-3 rounded-xl cursor-pointer transition-all ${
+                              n.isRead ? "bg-transparent opacity-50" : "bg-white/5 border border-white/5"
+                            }`}
+                          >
+                            <p className="text-xs text-gray-300">{n.message}</p>
+                            <p className="text-[10px] text-gray-500 mt-1">
+                              {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
 
-              <Link to={profilePath} className="hover:text-red-500 transition">
-                Account
-              </Link>
+              <NavLink to={profilePath}>Settings</NavLink>
+
+              <button
+                onClick={logout}
+                className="text-sm font-semibold text-red-500 hover:text-red-400 transition-colors ml-2"
+              >
+                Sign Out
+              </button>
             </>
-          )}
-
-          {/* PUBLIC NAV */}
-          {!user && (
-            <>
-              <Link to="/login" className="hover:text-red-500 transition">
-                Login
-              </Link>
-              <Link to="/register" className="hover:text-red-500 transition">
-                Register
-              </Link>
-            </>
-          )}
-
-          {/* LOGOUT */}
-          {user && (
-            <button
-              onClick={logout}
-              className="text-red-500 font-semibold hover:text-red-400 transition"
-            >
-              Logout
-            </button>
           )}
         </nav>
 
-        {/* MOBILE BUTTON */}
+        {/* MOBILE TOGGLE */}
         <button
           onClick={() => setOpen(!open)}
-          className="md:hidden p-2 border border-red-500/40 rounded text-gray-200"
+          className="md:hidden text-white text-2xl"
         >
           {open ? "✕" : "☰"}
         </button>
@@ -219,69 +176,22 @@ export default function Navbar() {
 
       {/* MOBILE MENU */}
       {open && (
-        <div className="md:hidden bg-black/90 border-t border-red-500/20">
-          <div className="px-6 py-4 space-y-4 text-gray-200">
-
-            {user && (
-              <button
-                onClick={() => setShowDropdown(!showDropdown)}
-                className="block"
-              >
-                🔔 Notifications ({unreadCount})
-              </button>
-            )}
-
-            {user?.role === "client" && (
+        <div className="md:hidden fixed inset-0 top-20 bg-black/95 backdrop-blur-lg z-50 p-6">
+          <nav className="flex flex-col gap-6 text-xl font-semibold">
+            {user ? (
               <>
-                <Link to="/search-lawyers" onClick={() => setOpen(false)} className="block">
-                  Find Lawyers
-                </Link>
-                <Link to={dashboardPath} onClick={() => setOpen(false)} className="block">
-                  Dashboard
-                </Link>
-                <Link to={profilePath} onClick={() => setOpen(false)} className="block">
-                  Account
-                </Link>
+                <Link to={dashboardPath} onClick={() => setOpen(false)}>My Dashboard</Link>
+                <Link to="/ai-assistant" onClick={() => setOpen(false)}>AI Helper</Link>
+                <Link to={profilePath} onClick={() => setOpen(false)} className="text-gray-400">Settings</Link>
+                <button onClick={logout} className="text-red-500 text-left">Sign Out</button>
+              </>
+            ) : (
+              <>
+                <Link to="/login" onClick={() => setOpen(false)}>Sign In</Link>
+                <Link to="/register" onClick={() => setOpen(false)} className="text-red-500">Get Started</Link>
               </>
             )}
-
-            {user?.role === "lawyer" && (
-              <>
-                <Link to={dashboardPath} onClick={() => setOpen(false)} className="block">
-                  Dashboard
-                </Link>
-                <Link to="/workspace" onClick={() => setOpen(false)} className="block">
-                  Workspace
-                </Link>
-                <Link to={profilePath} onClick={() => setOpen(false)} className="block">
-                  Account
-                </Link>
-              </>
-            )}
-
-            {!user && (
-              <>
-                <Link to="/login" onClick={() => setOpen(false)} className="block">
-                  Login
-                </Link>
-                <Link to="/register" onClick={() => setOpen(false)} className="block">
-                  Register
-                </Link>
-              </>
-            )}
-
-            {user && (
-              <button
-                onClick={() => {
-                  logout();
-                  setOpen(false);
-                }}
-                className="block text-red-500 font-semibold"
-              >
-                Logout
-              </button>
-            )}
-          </div>
+          </nav>
         </div>
       )}
     </header>
