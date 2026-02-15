@@ -7,6 +7,7 @@ import path from "path";
 import authRoutes from "./routes/authRoutes.js";
 
 // ROUTES
+import notificationRoutes from "./routes/notificationRoutes.js";
 import docRoutes from "./routes/docRoutes.js";
 import aiChatRoutes from "./routes/aiChatRoutes.js";  // GLOBAL + DOC AI
 import caseRoutes from "./routes/caseRoutes.js";
@@ -19,6 +20,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json({ limit: "50mb" }));
+app.use("/api/notifications", notificationRoutes);
 app.use(express.urlencoded({ extended: true }));
 app.use("/api/auth", authRoutes);
 app.use("/api/lawyers", lawyerRoutes);
