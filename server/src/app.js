@@ -13,7 +13,7 @@ import caseRoutes from "./routes/caseRoutes.js";
 import caseSubRoutes from "./routes/caseSubRoutes.js";
 import caseAiRoutes from "./routes/caseAiRoutes.js";
 import lawyerRoutes from "./routes/lawyerRoutes.js";
-
+import requestRoutes from "./routes/requestRoutes.js";
 dotenv.config();
 const app = express();
 
@@ -22,6 +22,7 @@ app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use("/api/auth", authRoutes);
 app.use("/api/lawyers", lawyerRoutes);
+app.use("/api/requests", requestRoutes);
 /* ============================================================
    📄 SERVE PDF FILES (VIEW IN BROWSER)
    ============================================================ */

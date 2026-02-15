@@ -5,59 +5,83 @@ export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Restore user from localStorage on refresh
+  /* ===========================
+     RESTORE SESSION ON REFRESH
+  =========================== */
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
-    if (storedUser) {
+    const token = localStorage.getItem("token");
+
+    if (storedUser && token) {
       setUser(JSON.parse(storedUser));
     }
+
+    setLoading(false);
   }, []);
 
+  /* ===========================
+     LOGIN
+  =========================== */
   const login = async (data) => {
-    const res = await loginUser(data);
+    try {
+      const res = await loginUser(data);
 
-    if (res?.token) {
-      // ✅ Store token separately
-      localStorage.setItem("token", res.token);
+      if (res?.token) {
+        localStorage.setItem("token", res.token);
 
-      // ✅ Store user data without token duplication
-      const userData = {
-        name: res.name,
-        email: res.email,
-        role: res.role,
-      };
+        const userData = {
+          name: res.name,
+          email: res.email,
+          role: res.role,
+        };
 
-      localStorage.setItem("user", JSON.stringify(userData));
-      setUser(userData);
+        localStorage.setItem("user", JSON.stringify(userData));
+        setUser(userData);
 
-      return res;
+        return res;
+      }
+
+      return null;
+    } catch (err) {
+      console.error("Login error:", err);
+      return null;
     }
-
-    return null;
   };
 
+  /* ===========================
+     REGISTER
+  =========================== */
   const register = async (data) => {
-    const res = await registerUser(data);
+    try {
+      const res = await registerUser(data);
 
-    if (res?.token) {
-      localStorage.setItem("token", res.token);
+      if (res?.token) {
+        localStorage.setItem("token", res.token);
 
-      const userData = {
-        name: res.name,
-        email: res.email,
-        role: res.role,
-      };
+        const userData = {
+          name: res.name,
+          email: res.email,
+          role: res.role,
+        };
 
-      localStorage.setItem("user", JSON.stringify(userData));
-      setUser(userData);
+        localStorage.setItem("user", JSON.stringify(userData));
+        setUser(userData);
 
-      return res;
+        return res;
+      }
+
+      return null;
+    } catch (err) {
+      console.error("Register error:", err);
+      return null;
     }
-
-    return null;
   };
 
+  /* ===========================
+     LOGOUT
+  =========================== */
   const logout = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
@@ -65,8 +89,10 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, setUser, login, register, logout }}>
-      {children}
+    <AuthContext.Provider
+      value={{ user, setUser, login, register, logout, loading }}
+    >
+      {!loading && children}
     </AuthContext.Provider>
   );
 };

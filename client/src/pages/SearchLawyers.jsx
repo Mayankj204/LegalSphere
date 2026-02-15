@@ -26,10 +26,9 @@ export default function SearchLawyers() {
   return (
     <PageTransition>
       <div className="pt-3 pb-20 px-6">
-        {/* CONTAINER */}
         <div className="max-w-7xl mx-auto">
 
-          {/* HERO SECTION */}
+          {/* HERO */}
           <div className="text-center mb-14">
             <h1 className="text-5xl font-bold text-white">
               Find the Right Lawyer
@@ -39,7 +38,7 @@ export default function SearchLawyers() {
             </p>
           </div>
 
-          {/* SEARCH BAR */}
+          {/* SEARCH */}
           <div className="flex justify-center mb-14">
             <div className="flex w-full max-w-2xl bg-black/40 backdrop-blur-xl border border-red-600/20 rounded-xl overflow-hidden shadow-lg shadow-red-600/10">
               <input
@@ -51,7 +50,7 @@ export default function SearchLawyers() {
               />
               <button
                 onClick={fetchLawyers}
-                className="px-8 bg-red-600 hover:bg-red-700 transition font-semibold"
+                className="px-8 bg-red-600 hover:bg-red-700 transition font-semibold text-white"
               >
                 Search
               </button>
