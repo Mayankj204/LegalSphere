@@ -99,11 +99,12 @@ export const login = async (req, res) => {
       return res.status(400).json({ error: "Email and password required" });
     }
 
-    let user = await User.findOne({ email });
+   let user = await User.findOne({ email }).select("+password");
+
     let role = "client";
 
     if (!user) {
-      user = await Lawyer.findOne({ email });
+     user = await Lawyer.findOne({ email }).select("+password");
       role = "lawyer";
     }
 
