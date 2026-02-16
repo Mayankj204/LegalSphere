@@ -18,15 +18,57 @@ async function parsePDF(buffer) {
    ======================================================================== */
 
 // GET ALL CASES
+// GET CASES FOR LOGGED IN USER
 export const listCases = async (req, res) => {
   try {
-    const cases = await CaseModel.find().sort({ updatedAt: -1 });
-    res.json({ ok: true, cases });
+    if (!req.user) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    let query = {};
+
+    if (req.user.role === "lawyer") {
+      query = { lawyerId: req.user._id };
+    } else if (req.user.role === "client") {
+      query = { clientId: req.user._id };
+    } else {
+      return res.status(403).json({ error: "Unauthorized" });
+    }
+
+    const cases = await CaseModel.find(query)
+      .populate("lawyerId", "name email")
+      .sort({ updatedAt: -1 });
+
+    const activeCount = cases.filter(
+      (c) => c.status === "Open" || c.status === "In Progress"
+    ).length;
+
+    const resolvedCount = cases.filter(
+      (c) => c.status === "Closed"
+    ).length;
+
+    const connectedLawyers = [
+      ...new Set(cases.map((c) => c.lawyerId?._id?.toString()))
+    ].length;
+
+    res.json({
+      ok: true,
+      cases,
+      stats: {
+        activeCount,
+        resolvedCount,
+        connectedLawyers,
+      },
+    });
+
   } catch (err) {
     console.error("Error fetching cases:", err);
     res.status(500).json({ ok: false, error: err.message });
   }
 };
+
+
+
 
 // CREATE NEW CASE
 export const createCase = async (req, res) => {

@@ -2,19 +2,24 @@ import express from "express";
 import {
   createRequest,
   getLawyerRequests,
+  getClientRequests,   // ✅ ADD THIS
   updateRequestStatus,
 } from "../controllers/requestController.js";
+
 import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// Client sends request
+/* ================= CLIENT SENDS REQUEST ================= */
 router.post("/", protect, createRequest);
 
-// Lawyer sees requests
+/* ================= LAWYER SEES REQUESTS ================= */
 router.get("/lawyer", protect, getLawyerRequests);
 
-// Lawyer approves/rejects
+/* ================= CLIENT SEES OWN REQUESTS ================= */
+router.get("/client", protect, getClientRequests);   // ✅ NOW VALID
+
+/* ================= LAWYER APPROVES / REJECTS ================= */
 router.put("/:id", protect, updateRequestStatus);
 
 export default router;

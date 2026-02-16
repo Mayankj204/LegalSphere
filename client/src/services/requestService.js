@@ -1,65 +1,37 @@
-import axios from "axios";
-
-const API = "http://localhost:5000/api/requests";
-
-// Helper to get auth headers
-const getAuthConfig = () => {
-  const token = localStorage.getItem("token");
-
-  return {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  };
-};
+// client/src/services/requestService.js
+import api from "./api";
 
 /* ================================
-   📌 CLIENT → SEND REQUEST
+   CLIENT → SEND REQUEST
 ================================ */
 export const sendConsultationRequest = async (lawyerId, message) => {
-  try {
-    const res = await axios.post(
-      API,
-      { lawyerId, message },
-      getAuthConfig()
-    );
-    return res.data;
-  } catch (err) {
-    console.error("Send request error:", err);
-    throw err;
-  }
+  const res = await api.post("/requests", {
+    lawyerId,
+    message,
+  });
+  return res.data;
 };
 
 /* ================================
-   📌 LAWYER → GET ALL REQUESTS
+   LAWYER → GET ALL REQUESTS
 ================================ */
 export const getLawyerRequests = async () => {
-  try {
-    const res = await axios.get(
-      `${API}/lawyer`,
-      getAuthConfig()
-    );
-    return res.data;
-  } catch (err) {
-    console.error("Get requests error:", err);
-    throw err;
-  }
+  const res = await api.get("/requests/lawyer");
+  return res.data;
 };
 
 /* ================================
-   📌 LAWYER → UPDATE REQUEST STATUS
-   status: "Approved" | "Rejected"
+   CLIENT → GET OWN REQUESTS
+================================ */
+export const getClientRequests = async () => {
+  const res = await api.get("/requests/client");
+  return res.data;
+};
+
+/* ================================
+   LAWYER → UPDATE STATUS
 ================================ */
 export const updateRequestStatus = async (requestId, status) => {
-  try {
-    const res = await axios.put(
-      `${API}/${requestId}`,
-      { status },
-      getAuthConfig()
-    );
-    return res.data;
-  } catch (err) {
-    console.error("Update request error:", err);
-    throw err;
-  }
+  const res = await api.put(`/requests/${requestId}`, { status });
+  return res.data;
 };

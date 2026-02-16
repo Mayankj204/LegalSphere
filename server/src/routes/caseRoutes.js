@@ -1,5 +1,7 @@
 // server/src/routes/caseRoutes.js
 import express from "express";
+import { protect } from "../middleware/authMiddleware.js";
+
 import {
   listCases,
   createCase,
@@ -19,10 +21,10 @@ const router = express.Router();
 /* ================================
    CASE CRUD (Dashboard + Client)
    ================================ */
-router.get("/", listCases);       
-router.post("/", createCase);     
-router.patch("/:id", updateCase); 
-router.delete("/:id", deleteCase);
+router.get("/", protect, listCases);       
+router.post("/", protect, createCase);     
+router.patch("/:id", protect, updateCase); 
+router.delete("/:id", protect, deleteCase);
 
 /* ================================
    CASE DETAILS PAGE
