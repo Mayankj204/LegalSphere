@@ -6,18 +6,30 @@ import fs from "fs";
 import path from "path";
 import { embedText } from "../utils/aiClient.js";
 
-/* ---------------------- FIXED PDF PARSE (ESM COMPATIBLE) ---------------------- */
-// pdf-parse is CommonJS → MUST be dynamically imported
+/* ========================================================================
+   🔥 SAFE PDF PARSER (Node 24 + ESM Compatible)
+   ======================================================================== */
+
 async function parsePDF(buffer) {
-  const pdfMod = await import("pdf-parse");     // dynamically load module
-  return pdfMod.default(buffer);                // call default export manually
+  const mod = await import("pdf-parse");
+
+  // Handle all possible export shapes
+  const pdfParse =
+    mod.default?.default ||
+    mod.default ||
+    mod;
+
+  if (typeof pdfParse !== "function") {
+    throw new Error("pdf-parse export is not a function");
+  }
+
+  return pdfParse(buffer);
 }
 
 /* ========================================================================
-   🎯 CASE CRUD (Dashboard, Case creation, editing, deleting)
+   🎯 CASE CRUD
    ======================================================================== */
 
-// GET ALL CASES
 // GET CASES FOR LOGGED IN USER
 export const listCases = async (req, res) => {
   try {
@@ -67,10 +79,7 @@ export const listCases = async (req, res) => {
   }
 };
 
-
-
-
-// CREATE NEW CASE
+// CREATE CASE
 export const createCase = async (req, res) => {
   try {
     if (!req.user) {
@@ -82,9 +91,8 @@ export const createCase = async (req, res) => {
       court: req.body.court || "",
       status: req.body.status || "Open",
       confidential: req.body.confidential || false,
-
-      lawyerId: req.user._id,  // ✅ auto assign
-      clientId: req.body.clientId || req.user._id, // fallback safety
+      lawyerId: req.user._id,
+      clientId: req.body.clientId || req.user._id,
     });
 
     res.json({ ok: true, case: created });
@@ -94,7 +102,6 @@ export const createCase = async (req, res) => {
     res.status(500).json({ ok: false, error: err.message });
   }
 };
-
 
 // UPDATE CASE
 export const updateCase = async (req, res) => {
@@ -123,6 +130,7 @@ export const deleteCase = async (req, res) => {
       ok: true,
       message: "Case and all belonging documents deleted successfully.",
     });
+
   } catch (err) {
     console.error("Error deleting case:", err);
     res.status(500).json({ ok: false, error: err.message });
@@ -130,25 +138,33 @@ export const deleteCase = async (req, res) => {
 };
 
 /* ========================================================================
-   📄 CASE DETAILS + DOCUMENT MANAGEMENT (Workspace)
+   📄 CASE DETAILS
    ======================================================================== */
 
-// GET CASE DETAILS
 export const getCaseById = async (req, res) => {
   const { caseId } = req.params;
 
   try {
-    const caseData = await CaseModel.findById(caseId);
-    if (!caseData) return res.status(404).json({ ok: false, message: "Case not found" });
+    const caseData = await CaseModel.findById(caseId)
+      .populate("clientId", "name email")
+      .populate("lawyerId", "name email");
+
+    if (!caseData) {
+      return res.status(404).json({ ok: false, message: "Case not found" });
+    }
 
     res.json({ ok: true, case: caseData });
+
   } catch (err) {
     console.error("Error fetching case:", err);
     res.status(500).json({ ok: false, error: err.message });
   }
 };
 
-// GET CASE DOCUMENTS
+/* ========================================================================
+   📂 DOCUMENTS
+   ======================================================================== */
+
 export const getCaseDocuments = async (req, res) => {
   const { caseId } = req.params;
 
@@ -161,7 +177,6 @@ export const getCaseDocuments = async (req, res) => {
   }
 };
 
-// UPLOAD CASE DOCUMENT (includes text extraction + embedding)
 export const uploadCaseDocument = async (req, res) => {
   const { caseId } = req.params;
 
@@ -170,41 +185,36 @@ export const uploadCaseDocument = async (req, res) => {
       return res.status(400).json({ ok: false, message: "No file uploaded" });
     }
 
-    // File paths
     const filePathRel = `/uploads/${req.file.filename}`;
     const fullPath = path.join(process.cwd(), "uploads", req.file.filename);
 
-    // -------------- Extract text ----------------
     let text = "";
-    const ext = (req.file.originalname || "").split(".").pop().toLowerCase();
+    const ext = req.file.originalname.split(".").pop().toLowerCase();
 
     if (ext === "pdf") {
       try {
         const buffer = fs.readFileSync(fullPath);
-        const pdfData = await parsePDF(buffer);     // FIXED: use dynamic import wrapper
+        const pdfData = await parsePDF(buffer);
         text = pdfData.text || "";
       } catch (err) {
         console.error("PDF parse error:", err);
-        text = "";
       }
     } else {
       try {
         text = fs.readFileSync(fullPath, "utf8");
-      } catch (err) {
+      } catch {
         text = "";
       }
     }
 
-    // -------------- Generate Embedding ----------------
     let embedding = [];
     try {
-      const chunk = (text || "").slice(0, 30000); // limit size
+      const chunk = text.slice(0, 30000);
       embedding = await embedText(chunk);
     } catch (err) {
       console.error("Embedding generation failed:", err);
     }
 
-    // -------------- Save Document ----------------
     const doc = await Document.create({
       caseId,
       filename: req.file.originalname,
@@ -223,7 +233,6 @@ export const uploadCaseDocument = async (req, res) => {
   }
 };
 
-// UPDATE DOCUMENT
 export const updateDocument = async (req, res) => {
   const { docId } = req.params;
   const { filename, tag } = req.body;
@@ -234,7 +243,6 @@ export const updateDocument = async (req, res) => {
       { filename, tag },
       { new: true }
     );
-
     res.json({ ok: true, updated });
   } catch (err) {
     console.error("Error updating document:", err);
@@ -242,7 +250,6 @@ export const updateDocument = async (req, res) => {
   }
 };
 
-// DELETE DOCUMENT
 export const deleteDocument = async (req, res) => {
   const { docId } = req.params;
 

@@ -8,7 +8,6 @@ export default function Documents({ caseId }) {
   const [loadingDocs, setLoadingDocs] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  // Edit modal state
   const [showEdit, setShowEdit] = useState(false);
   const [editDoc, setEditDoc] = useState(null);
   const [editFilename, setEditFilename] = useState("");
@@ -17,8 +16,7 @@ export default function Documents({ caseId }) {
   const TAG_OPTIONS = ["Evidence", "FIR", "Contract", "Notes", "Court Order", "Other"];
 
   useEffect(() => {
-    loadDocs();
-    // eslint-disable-next-line
+    if (caseId) loadDocs();
   }, [caseId]);
 
   const loadDocs = async () => {
@@ -62,7 +60,6 @@ export default function Documents({ caseId }) {
         tag: editTag,
       });
       setShowEdit(false);
-      setEditDoc(null);
       await loadDocs();
     } catch (err) {
       console.error("Update failed:", err);
@@ -71,7 +68,7 @@ export default function Documents({ caseId }) {
 
   const handleDelete = async (doc) => {
     if (!doc) return;
-    const ok = window.confirm(`Permanently delete "${doc.filename}" from the vault?`);
+    const ok = window.confirm(`Delete "${doc.filename}" permanently?`);
     if (!ok) return;
     try {
       await workspaceService.deleteCaseDocument(caseId, doc._id);
@@ -89,134 +86,156 @@ export default function Documents({ caseId }) {
   };
 
   return (
-    <div className="bg-[#050505] text-slate-200">
-      
-      {/* HEADER SECTION */}
+    <div className="max-w-6xl mx-auto p-6 text-slate-200">
+
+      {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-white flex items-center gap-2">
-            <span className="w-2 h-2 bg-red-600 rounded-full" />
-            Evidence Vault
-          </h2>
-          <p className="text-[10px] text-gray-500 font-mono mt-1 uppercase tracking-tighter">Secure Document Repository</p>
+          <h2 className="text-2xl font-bold">Documents</h2>
+          <p className="text-sm text-gray-400 mt-1">
+            Manage all files related to this case
+          </p>
         </div>
 
-        <label className="cursor-pointer bg-red-600 hover:bg-red-500 text-white px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all shadow-lg shadow-red-600/10 active:scale-95">
-          {uploading ? "Encrypting..." : "Upload Document"}
+        <label className="cursor-pointer bg-blue-600 hover:bg-blue-700 px-5 py-2 rounded-md text-sm font-medium transition">
+          {uploading ? "Uploading..." : "Upload File"}
           <input
             type="file"
             accept=".pdf,.txt,.doc,.docx"
             className="hidden"
-            onChange={(e) => e.target.files[0] && handleUpload(e.target.files[0])}
+            onChange={(e) =>
+              e.target.files[0] && handleUpload(e.target.files[0])
+            }
           />
         </label>
       </div>
 
-      {/* DOCUMENT REPOSITORY GRID */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        {loadingDocs ? (
-          <div className="col-span-full py-20 text-center font-mono text-[10px] text-gray-500 uppercase tracking-widest animate-pulse">
-            Accessing Encrypted Storage...
-          </div>
-        ) : documents.length === 0 ? (
-          <div className="col-span-full py-20 text-center border border-dashed border-white/5 rounded-3xl text-gray-600 text-xs uppercase tracking-[0.3em]">
-            Vault is empty. No evidence uploaded.
-          </div>
-        ) : (
-          documents.map((doc) => {
+      {/* Document List */}
+      {loadingDocs ? (
+        <div className="text-center py-20 text-gray-400">
+          Loading documents...
+        </div>
+      ) : documents.length === 0 ? (
+        <div className="text-center py-20 border border-dashed border-gray-700 rounded-xl text-gray-500">
+          No documents uploaded yet.
+        </div>
+      ) : (
+        <div className="grid gap-5">
+          {documents.map((doc) => {
             const fileUrl = doc.storageUrl.startsWith("http")
               ? doc.storageUrl
               : `${BACKEND_URL}${doc.storageUrl}`;
 
             return (
-              <div key={doc._id} className="group bg-[#0A0A0A] border border-white/5 rounded-2xl p-6 hover:bg-[#0F0F0F] hover:border-red-600/20 transition-all duration-300 relative overflow-hidden">
-                <div className="flex justify-between items-start relative z-10">
-                  <div className="flex-1 pr-4">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="w-8 h-8 bg-red-600/10 rounded-lg flex items-center justify-center text-red-500 text-xs">
-                        DOC
-                      </div>
-                      <p className="font-semibold text-white group-hover:text-red-500 transition-colors truncate w-48 lg:w-64">
-                        {doc.filename}
-                      </p>
-                    </div>
-                    
-                    <div className="flex items-center gap-3">
-                      {doc.tag && (
-                        <span className="text-[9px] px-2 py-0.5 bg-red-600/10 border border-red-600/20 text-red-500 rounded uppercase font-black tracking-tighter">
-                          {doc.tag}
-                        </span>
-                      )}
-                      <p className="text-[9px] text-gray-600 font-mono uppercase">
-                        {new Date(doc.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
-                      </p>
-                    </div>
+              <div
+                key={doc._id}
+                className="bg-[#141414] hover:bg-[#1b1b1b] transition border border-gray-800 rounded-xl p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-5"
+              >
+                {/* Left Side */}
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-white truncate">
+                    {doc.filename}
+                  </h3>
+
+                  <div className="flex items-center gap-4 mt-2 text-sm text-gray-400 flex-wrap">
+                    {doc.tag && (
+                      <span className="px-3 py-1 text-xs bg-blue-600/20 text-blue-400 rounded-full">
+                        {doc.tag}
+                      </span>
+                    )}
+                    <span>
+                      Uploaded on{" "}
+                      {new Date(doc.createdAt).toLocaleDateString()}
+                    </span>
                   </div>
 
-                  <div className="flex flex-col gap-2">
-                    <button onClick={() => window.open(fileUrl, "_blank")} className="text-[10px] uppercase font-bold text-gray-400 hover:text-white transition-colors">View</button>
-                    <button onClick={() => downloadFile(fileUrl, doc.filename)} className="text-[10px] uppercase font-bold text-blue-500/70 hover:text-blue-400 transition-colors">Fetch</button>
-                    <button onClick={() => openEditModal(doc)} className="text-[10px] uppercase font-bold text-gray-600 hover:text-gray-400 transition-colors">Edit</button>
-                    <button onClick={() => handleDelete(doc)} className="text-[10px] uppercase font-bold text-red-900/60 hover:text-red-500 transition-colors">Purge</button>
-                  </div>
-                </div>
-
-                {doc.summary && (
-                  <div className="mt-5 p-4 bg-white/[0.02] border border-white/5 rounded-xl">
-                    <p className="text-[9px] uppercase font-black text-gray-600 mb-2 tracking-widest">AI Intelligence Synthesis:</p>
-                    <p className="text-xs text-gray-400 leading-relaxed line-clamp-3 italic">
+                  {doc.summary && (
+                    <p className="mt-3 text-sm text-gray-500 line-clamp-2">
                       {doc.summary}
                     </p>
-                  </div>
-                )}
+                  )}
+                </div>
+
+                {/* Right Side Actions */}
+                <div className="flex gap-3 flex-wrap text-sm">
+                  <button
+                    onClick={() => window.open(fileUrl, "_blank")}
+                    className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 rounded-md"
+                  >
+                    View
+                  </button>
+
+                  <button
+                    onClick={() => downloadFile(fileUrl, doc.filename)}
+                    className="px-3 py-1.5 bg-green-600 hover:bg-green-700 rounded-md"
+                  >
+                    Download
+                  </button>
+
+                  <button
+                    onClick={() => openEditModal(doc)}
+                    className="px-3 py-1.5 bg-yellow-600 hover:bg-yellow-700 rounded-md"
+                  >
+                    Edit
+                  </button>
+
+                  <button
+                    onClick={() => handleDelete(doc)}
+                    className="px-3 py-1.5 bg-red-600 hover:bg-red-700 rounded-md"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
             );
-          })
-        )}
-      </div>
+          })}
+        </div>
+      )}
 
-      {/* EDIT MODAL - Professional Overlay */}
+      {/* Edit Modal */}
       {showEdit && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-xl flex items-center justify-center z-50 p-6">
-          <div className="bg-[#0A0A0A] border border-white/10 w-full max-w-sm rounded-3xl p-8 shadow-2xl">
-            <h3 className="text-xl font-light text-white mb-8">Modify Metadata</h3>
-            
-            <div className="space-y-6">
-              <div>
-                <label className="text-[9px] uppercase font-bold text-gray-500 mb-1 block ml-1">Archive Filename</label>
-                <input
-                  className="w-full p-3 bg-black border border-white/5 rounded-xl text-sm text-white focus:border-red-600 outline-none"
-                  value={editFilename}
-                  onChange={(e) => setEditFilename(e.target.value)}
-                />
-              </div>
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-[#1e1e1e] w-full max-w-md rounded-xl p-6 shadow-xl">
+            <h3 className="text-lg font-semibold mb-6">Edit Document</h3>
 
-              <div>
-                <label className="text-[9px] uppercase font-bold text-gray-500 mb-1 block ml-1">Classification Tag</label>
-                <select
-                  value={editTag}
-                  onChange={(e) => setEditTag(e.target.value)}
-                  className="w-full p-3 bg-black border border-white/5 rounded-xl text-sm text-white focus:border-red-600 outline-none"
-                >
-                  <option value="">Unclassified</option>
-                  {TAG_OPTIONS.map((tag) => (
-                    <option key={tag} value={tag}>{tag}</option>
-                  ))}
-                </select>
-              </div>
+            <div className="space-y-4">
+              <input
+                className="w-full p-3 bg-black border border-gray-700 rounded-md text-white focus:border-blue-500 outline-none"
+                value={editFilename}
+                onChange={(e) => setEditFilename(e.target.value)}
+              />
+
+              <select
+                value={editTag}
+                onChange={(e) => setEditTag(e.target.value)}
+                className="w-full p-3 bg-black border border-gray-700 rounded-md text-white focus:border-blue-500 outline-none"
+              >
+                <option value="">Select tag</option>
+                {TAG_OPTIONS.map((tag) => (
+                  <option key={tag} value={tag}>
+                    {tag}
+                  </option>
+                ))}
+              </select>
             </div>
 
-            <div className="mt-10 flex justify-end gap-3">
-              <button onClick={() => setShowEdit(false)} className="px-4 py-2 text-xs text-gray-500 hover:text-white transition-colors">Discard</button>
-              <button onClick={saveEdit} className="px-6 py-2 bg-red-600 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-red-500">Save Changes</button>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => setShowEdit(false)}
+                className="px-4 py-2 text-gray-400 hover:text-white"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveEdit}
+                className="px-5 py-2 bg-blue-600 hover:bg-blue-700 rounded-md"
+              >
+                Save
+              </button>
             </div>
           </div>
         </div>
       )}
-
-      <p className="mt-12 text-center text-[9px] text-gray-700 font-mono uppercase tracking-[0.4em]">
-        Verified Cryptographic Storage Node | LegalSphere V2
-      </p>
     </div>
   );
 }

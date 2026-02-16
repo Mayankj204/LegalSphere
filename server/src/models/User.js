@@ -6,6 +6,8 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+      minlength: 2,
+      maxlength: 100,
     },
 
     email: {
@@ -14,18 +16,19 @@ const userSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
+      match: [/^\S+@\S+\.\S+$/, "Please enter a valid email address"],
     },
 
     password: {
       type: String,
       required: true,
-      select: false, // 🔒 Prevent password from being returned by default
+      select: false, // 🔒 Never return password by default
     },
 
     role: {
       type: String,
+      enum: ["client", "lawyer", "admin"],
       default: "client",
-      enum: ["client"], // If only clients use this model
     },
 
     phone: {
@@ -57,13 +60,16 @@ const userSchema = new mongoose.Schema(
       default: "",
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  }
 );
 
-/* 🔥 Remove password when converting to JSON */
+/* 🔥 Hide sensitive fields automatically */
 userSchema.methods.toJSON = function () {
-  const obj = this.toObject();
+  const obj = this.toObject({ virtuals: true });
   delete obj.password;
+  delete obj.__v;
   return obj;
 };
 
