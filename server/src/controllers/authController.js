@@ -24,7 +24,6 @@ export const register = async (req, res) => {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    // Check existing user across both collections
     const existingUser =
       (await User.findOne({ email })) ||
       (await Lawyer.findOne({ email }));
@@ -46,11 +45,9 @@ export const register = async (req, res) => {
 
       let parsedLanguages = [];
       if (languages) {
-        if (Array.isArray(languages)) {
-          parsedLanguages = languages;
-        } else if (typeof languages === "string") {
-          parsedLanguages = languages.split(",").map((l) => l.trim());
-        }
+        parsedLanguages = Array.isArray(languages)
+          ? languages
+          : languages.split(",").map((l) => l.trim());
       }
 
       newUser = await Lawyer.create({
@@ -142,11 +139,9 @@ export const login = async (req, res) => {
 /* ================= UPDATE PROFILE ================= */
 export const updateProfile = async (req, res) => {
   try {
-    const { role } = req;
-
     let user;
 
-    if (role === "lawyer") {
+    if (req.role === "lawyer") {
       user = await Lawyer.findById(req.user._id);
     } else {
       user = await User.findById(req.user._id);
@@ -156,17 +151,112 @@ export const updateProfile = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Update only provided fields
+    // 🚫 Prevent sensitive field overwrite
+    const restrictedFields = ["password", "role", "_id", "email"];
+
     Object.keys(req.body).forEach((key) => {
-      user[key] = req.body[key];
+      if (!restrictedFields.includes(key)) {
+        user[key] = req.body[key];
+      }
     });
 
     const updatedUser = await user.save();
 
-    res.json(updatedUser);
+    const userObj = updatedUser.toObject();
+    delete userObj.password;
+
+    res.json(userObj);
 
   } catch (err) {
     console.error("Update profile error:", err);
     res.status(500).json({ error: "Profile update failed" });
+  }
+};
+
+
+/* ================= GET CURRENT USER ================= */
+export const getMe = async (req, res) => {
+  try {
+    let user;
+
+    if (req.role === "lawyer") {
+      user = await Lawyer.findById(req.user._id).select("-password");
+    } else {
+      user = await User.findById(req.user._id).select("-password");
+    }
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.json(user);
+
+  } catch (err) {
+    console.error("Get profile error:", err);
+    res.status(500).json({ error: "Failed to fetch profile" });
+  }
+};
+
+
+/* ================= UPDATE PROFILE IMAGE ================= */
+export const updateProfileImage = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+
+    let user;
+
+    if (req.role === "lawyer") {
+      user = await Lawyer.findById(req.user._id);
+    } else {
+      user = await User.findById(req.user._id);
+    }
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    user.profileImage = `/uploads/${req.file.filename}`;
+    await user.save();
+
+    const userObj = user.toObject();
+    delete userObj.password;
+
+    res.json(userObj);
+
+  } catch (err) {
+    console.error("Profile image update error:", err);
+    res.status(500).json({ error: "Failed to update image" });
+  }
+};
+
+
+/* ================= REMOVE PROFILE IMAGE ================= */
+export const removeProfileImage = async (req, res) => {
+  try {
+    let user;
+
+    if (req.role === "lawyer") {
+      user = await Lawyer.findById(req.user._id);
+    } else {
+      user = await User.findById(req.user._id);
+    }
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    user.profileImage = "";
+    await user.save();
+
+    const userObj = user.toObject();
+    delete userObj.password;
+
+    res.json(userObj);
+
+  } catch (err) {
+    console.error("Remove profile image error:", err);
+    res.status(500).json({ error: "Failed to remove image" });
   }
 };
