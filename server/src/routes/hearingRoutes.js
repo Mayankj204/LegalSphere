@@ -1,9 +1,17 @@
-// hearingRoutes.js
-const express = require("express");
+import express from "express";
+import { protect } from "../middleware/authMiddleware.js";
+import {
+  getHearings,
+  createHearing,
+  updateHearing,
+  deleteHearing,
+} from "../controllers/hearingController.js";
+
 const router = express.Router();
-const controller = require("../controllers/hearingController");
 
-router.get("/", controller.list);
-router.post("/", controller.create);
+router.get("/", protect, getHearings);
+router.post("/", protect, createHearing);
+router.put("/:id", protect, updateHearing);
+router.delete("/:id", protect, deleteHearing);
 
-module.exports = router;
+export default router;

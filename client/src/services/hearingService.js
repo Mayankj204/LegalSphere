@@ -1,14 +1,39 @@
-// hearingService.js
-import api from "./api";
+// services/hearingService.js
+import axios from "axios";
 
-export const getHearings = async () => {
-  const res = await api.get("/hearings");
-  return res.data.hearings;
+const API = "http://localhost:5000/api/hearings";
+
+const token = localStorage.getItem("token");
+
+const config = {
+  headers: {
+    Authorization: `Bearer ${token}`,
+  },
 };
 
-export const createHearing = async (payload) => {
-  const res = await api.post("/hearings", payload);
-  return res.data.hearing;
+const getHearings = async () => {
+  const res = await axios.get(API, config);
+  return res.data;
 };
 
-export default { getHearings, createHearing };
+const createHearing = async (data) => {
+  const res = await axios.post(API, data, config);
+  return res.data;
+};
+
+const updateHearing = async (id, data) => {
+  const res = await axios.put(`${API}/${id}`, data, config);
+  return res.data;
+};
+
+const deleteHearing = async (id) => {
+  const res = await axios.delete(`${API}/${id}`, config);
+  return res.data;
+};
+
+export default {
+  getHearings,
+  createHearing,
+  updateHearing,
+  deleteHearing,
+};

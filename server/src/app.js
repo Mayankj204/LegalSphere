@@ -15,6 +15,7 @@ import caseSubRoutes from "./routes/caseSubRoutes.js";
 import caseAiRoutes from "./routes/caseAiRoutes.js";
 import lawyerRoutes from "./routes/lawyerRoutes.js";
 import requestRoutes from "./routes/requestRoutes.js";
+import hearingRoutes from "./routes/hearingRoutes.js";
 dotenv.config();
 const app = express();
 
@@ -25,6 +26,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/auth", authRoutes);
 app.use("/api/lawyers", lawyerRoutes);
 app.use("/api/requests", requestRoutes);
+app.use("/api/hearings", hearingRoutes);
 /* ============================================================
    📄 SERVE PDF FILES (VIEW IN BROWSER)
    ============================================================ */
