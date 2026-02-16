@@ -1,6 +1,7 @@
 import ConsultationRequest from "../models/ConsultationRequest.js";
 import Notification from "../models/Notification.js";
 import Case from "../models/Case.js";
+
 /* ================= CREATE REQUEST ================= */
 export const createRequest = async (req, res) => {
   try {
@@ -14,6 +15,7 @@ export const createRequest = async (req, res) => {
       client: req.user._id,
       lawyer: lawyerId,
       message,
+      status: "Pending",
     });
 
     res.status(201).json(request);
@@ -56,7 +58,6 @@ export const getClientRequests = async (req, res) => {
 };
 
 /* ================= UPDATE REQUEST STATUS ================= */
-
 export const updateRequestStatus = async (req, res) => {
   try {
     const { status } = req.body;
@@ -82,7 +83,7 @@ export const updateRequestStatus = async (req, res) => {
     if (status === "Approved") {
       await Case.create({
         title: "New Legal Consultation Case",
-        clientId: request.client, // ✅ IMPORTANT
+        clientId: request.client,
         lawyerId: request.lawyer,
         status: "Open",
       });
@@ -103,5 +104,29 @@ export const updateRequestStatus = async (req, res) => {
   } catch (err) {
     console.error("Update request error:", err);
     res.status(500).json({ error: "Failed to update request" });
+  }
+};
+
+/* ================= DELETE REQUEST ================= */
+export const deleteRequest = async (req, res) => {
+  try {
+    const request = await ConsultationRequest.findById(req.params.id);
+
+    if (!request) {
+      return res.status(404).json({ error: "Request not found" });
+    }
+
+    // Only assigned lawyer can delete
+    if (request.lawyer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: "Unauthorized" });
+    }
+
+    await request.deleteOne();
+
+    res.json({ message: "Request deleted successfully" });
+
+  } catch (error) {
+    console.error("Delete request error:", error);
+    res.status(500).json({ error: "Server error" });
   }
 };

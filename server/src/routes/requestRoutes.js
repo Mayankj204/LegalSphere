@@ -2,8 +2,9 @@ import express from "express";
 import {
   createRequest,
   getLawyerRequests,
-  getClientRequests,   // ✅ ADD THIS
+  getClientRequests,
   updateRequestStatus,
+  deleteRequest,
 } from "../controllers/requestController.js";
 
 import { protect } from "../middleware/authMiddleware.js";
@@ -17,9 +18,12 @@ router.post("/", protect, createRequest);
 router.get("/lawyer", protect, getLawyerRequests);
 
 /* ================= CLIENT SEES OWN REQUESTS ================= */
-router.get("/client", protect, getClientRequests);   // ✅ NOW VALID
+router.get("/client", protect, getClientRequests);
 
 /* ================= LAWYER APPROVES / REJECTS ================= */
 router.put("/:id", protect, updateRequestStatus);
+
+/* ================= LAWYER DELETE REQUEST ================= */
+router.delete("/:id", protect, deleteRequest);
 
 export default router;

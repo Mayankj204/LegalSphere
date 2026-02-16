@@ -73,13 +73,28 @@ export const listCases = async (req, res) => {
 // CREATE NEW CASE
 export const createCase = async (req, res) => {
   try {
-    const created = await CaseModel.create(req.body);
+    if (!req.user) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const created = await CaseModel.create({
+      title: req.body.title,
+      court: req.body.court || "",
+      status: req.body.status || "Open",
+      confidential: req.body.confidential || false,
+
+      lawyerId: req.user._id,  // ✅ auto assign
+      clientId: req.body.clientId || req.user._id, // fallback safety
+    });
+
     res.json({ ok: true, case: created });
+
   } catch (err) {
     console.error("Error creating case:", err);
     res.status(500).json({ ok: false, error: err.message });
   }
 };
+
 
 // UPDATE CASE
 export const updateCase = async (req, res) => {
