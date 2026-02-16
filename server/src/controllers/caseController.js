@@ -261,3 +261,6 @@ export const deleteDocument = async (req, res) => {
     res.status(500).json({ ok: false, error: err.message });
   }
 };
+
+
+

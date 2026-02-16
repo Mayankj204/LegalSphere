@@ -31,6 +31,34 @@ export const addNote = async (req, res) => {
   }
 };
 
+export const updateNote = async (req, res) => {
+  const { noteId } = req.params;
+  const { text } = req.body;
+
+  try {
+    const updated = await Note.findByIdAndUpdate(
+      noteId,
+      { text },
+      { new: true }
+    );
+    res.json({ ok: true, note: updated });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+};
+
+export const deleteNote = async (req, res) => {
+  const { noteId } = req.params;
+
+  try {
+    await Note.findByIdAndDelete(noteId);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+};
+
+
 
 /* ============================================================
    TIMELINE

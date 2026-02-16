@@ -26,6 +26,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/auth", authRoutes);
 app.use("/api/lawyers", lawyerRoutes);
 app.use("/api/requests", requestRoutes);
+
 app.use("/api/hearings", hearingRoutes);
 /* ============================================================
    📄 SERVE PDF FILES (VIEW IN BROWSER)

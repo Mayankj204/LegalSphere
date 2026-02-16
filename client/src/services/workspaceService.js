@@ -116,6 +116,17 @@ const workspaceService = {
     return res.data.task;
   },
 
+  updateNote: async (caseId, noteId, payload) => {
+  const res = await api.patch(`/cases/${caseId}/notes/${noteId}`, payload);
+  return res.data.note;
+},
+
+deleteNote: async (caseId, noteId) => {
+  const res = await api.delete(`/cases/${caseId}/notes/${noteId}`);
+  return res.data;
+},
+
+
   toggleTask: async (taskId) => {
     const res = await api.patch(`/tasks/${taskId}/toggle`);
     return res.data.task;

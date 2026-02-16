@@ -11,40 +11,64 @@ import {
   getCaseDocuments,
   uploadCaseDocument,
   updateDocument,
-  deleteDocument
+  deleteDocument,
 } from "../controllers/caseController.js";
 
-import { upload } from "../utils/upload.js";   // ✅ REQUIRED FOR DOCUMENT UPLOAD ROUTE
+// 🔥 Import Note Controllers
+import {
+  getNotes,
+  addNote,
+  updateNote,
+  deleteNote,
+} from "../controllers/caseSubController.js";
+
+import { upload } from "../utils/upload.js";
 
 const router = express.Router();
 
 /* ================================
-   CASE CRUD (Dashboard + Client)
+   CASE CRUD
    ================================ */
-router.get("/", protect, listCases);       
-router.post("/", protect, createCase);     
-router.patch("/:id", protect, updateCase); 
+router.get("/", protect, listCases);
+router.post("/", protect, createCase);
+router.patch("/:id", protect, updateCase);
 router.delete("/:id", protect, deleteCase);
 
 /* ================================
-   CASE DETAILS PAGE
+   CASE DETAILS
    ================================ */
-router.get("/:caseId", getCaseById);
+router.get("/:caseId", protect, getCaseById);
+
+/* ================================
+   NOTES ROUTES
+   ================================ */
+router.get("/:caseId/notes", protect, getNotes);
+router.post("/:caseId/notes", protect, addNote);
+router.patch("/:caseId/notes/:noteId", protect, updateNote);
+router.delete("/:caseId/notes/:noteId", protect, deleteNote);
 
 /* ================================
    DOCUMENT MANAGEMENT
    ================================ */
-router.get("/:caseId/documents", getCaseDocuments);
+router.get("/:caseId/documents", protect, getCaseDocuments);
 
-// ✅ FIX: ADD multer handler
 router.post(
   "/:caseId/documents",
-  upload.single("file"),       // <--- this was missing
+  protect,
+  upload.single("file"),
   uploadCaseDocument
 );
 
-/* Edit / Delete Document */
-router.patch("/:caseId/documents/:docId", updateDocument);
-router.delete("/:caseId/documents/:docId", deleteDocument);
+router.patch(
+  "/:caseId/documents/:docId",
+  protect,
+  updateDocument
+);
+
+router.delete(
+  "/:caseId/documents/:docId",
+  protect,
+  deleteDocument
+);
 
 export default router;
