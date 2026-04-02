@@ -1,68 +1,84 @@
-// client/src/pages/UpcomingHearings.jsx
-import React, { useEffect, useState } from "react";
-import workspaceService from "../services/workspaceService";
-import { useNavigate } from "react-router-dom";
-import PageTransition from "../components/PageTransition";
+  // client/src/pages/UpcomingHearings.jsx
+  import React, { useEffect, useState } from "react";
+  import workspaceService from "../services/workspaceService";
+  import { useNavigate } from "react-router-dom";
+  import PageTransition from "../components/PageTransition";
 
-export default function UpcomingHearings() {
-  const navigate = useNavigate();
-  const [hearings, setHearings] = useState([]);
-  const [loading, setLoading] = useState(true);
+  export default function UpcomingHearings() {
+    const navigate = useNavigate();
 
-  const [showAdd, setShowAdd] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+    const [hearings, setHearings] = useState([]);
+    const [cases, setCases] = useState([]); // 🔥 cases state
+    const [loading, setLoading] = useState(true);
 
-  const [newHearing, setNewHearing] = useState({
-    caseId: "",
-    date: "",
-    court: "",
-    purpose: "",
-  });
+    const [showAdd, setShowAdd] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
 
-  /* ================= LOAD ================= */
+    const [newHearing, setNewHearing] = useState({
+      caseId: "",
+      date: "",
+      court: "",
+      purpose: "",
+    });
 
-  const loadHearings = async () => {
-    setLoading(true);
+    /* ================= LOAD HEARINGS ================= */
+    const loadHearings = async () => {
+      setLoading(true);
+      try {
+        const data = await workspaceService.getHearings();
+        setHearings(data || []);
+      } catch (err) {
+        console.error("Failed to load hearings:", err);
+        setHearings([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    /* ================= LOAD CASES ================= */
+  const loadCases = async () => {
     try {
-      const data = await workspaceService.getHearings();
-      setHearings(data || []);
+      const res = await workspaceService.getCases?.() 
+        || await fetch("http://localhost:5000/api/cases", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }).then(r => r.json());
+
+      setCases(res.cases || res || []);
     } catch (err) {
-      console.error("Failed to load hearings:", err);
-      setHearings([]);
-    } finally {
-      setLoading(false);
+      console.error("Failed to load cases:", err);
     }
   };
 
-  useEffect(() => {
-    loadHearings();
-  }, []);
+    useEffect(() => {
+      loadHearings();
+      loadCases(); // 🔥 load cases
+    }, []);
 
-  // ESC close modal
-  useEffect(() => {
-    const handleEsc = (e) => {
-      if (e.key === "Escape") setShowAdd(false);
-    };
-    window.addEventListener("keydown", handleEsc);
-    return () => window.removeEventListener("keydown", handleEsc);
-  }, []);
-
-  /* ================= ADD HEARING ================= */
-
+    /* ================= ADD HEARING ================= */
   const addHearing = async () => {
-    if (!newHearing.caseId.trim() || !newHearing.date) {
-      alert("Case ID and Date are required.");
+    if (!newHearing.caseId || !newHearing.date) {
+      alert("Case and Date are required.");
       return;
     }
 
     try {
       setSubmitting(true);
 
-      await workspaceService.addHearing(newHearing.caseId.trim(), {
-        date: new Date(newHearing.date), // safer date conversion
+      const cleanCaseId = String(newHearing.caseId)
+        .replace(/"/g, "")
+        .trim();
+
+      console.log("FINAL caseId:", cleanCaseId); // 🔥 DEBUG
+
+      await workspaceService.addHearing(cleanCaseId, {
+        date: new Date(newHearing.date),
         court: newHearing.court,
         purpose: newHearing.purpose,
       });
+      console.log("TYPE:", typeof newHearing);
+console.log("DATA:", newHearing);
 
       setShowAdd(false);
       setNewHearing({
@@ -80,175 +96,149 @@ export default function UpcomingHearings() {
       setSubmitting(false);
     }
   };
+    return (
+      <PageTransition>
+        <div className="min-h-screen bg-[#050505] text-slate-200 pt-28 pb-20 px-8">
 
-  return (
-    <PageTransition>
-      <div className="min-h-screen bg-[#050505] text-slate-200 pt-28 pb-20 px-8">
+          {/* HEADER */}
+          <div className="max-w-7xl mx-auto flex justify-between mb-12">
+            <h1 className="text-3xl text-white">Court Schedule</h1>
 
-        {/* HEADER */}
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
-          <div>
-            <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-              <span className="w-2 h-2 bg-red-600 rounded-full" />
-              Court Schedule
-            </h1>
-            <p className="text-[10px] text-gray-500 uppercase tracking-[0.3em] font-mono mt-1">
-              Central Registry // {hearings.length} Active Listings
-            </p>
+            <button
+              onClick={() => setShowAdd(true)}
+              className="px-6 py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl"
+            >
+              + Register Hearing
+            </button>
           </div>
 
-          <button
-            onClick={() => setShowAdd(true)}
-            className="px-8 py-3 bg-red-600 hover:bg-red-500 text-white text-[10px] font-bold uppercase tracking-widest rounded-xl transition-all"
-          >
-            + Register Hearing
-          </button>
-        </div>
-
-        {/* HEARINGS LIST */}
-        <div className="max-w-7xl mx-auto">
-          {loading ? (
-            <div className="py-20 text-center text-gray-500 uppercase text-xs animate-pulse">
-              Synchronizing Master Schedule...
-            </div>
-          ) : hearings.length === 0 ? (
-            <div className="py-24 text-center border border-dashed border-white/5 rounded-3xl">
-              <p className="text-xs text-gray-600 uppercase">
-                No hearings detected
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {hearings.map((h) => (
+          {/* HEARINGS LIST */}
+          <div className="max-w-7xl mx-auto">
+            {loading ? (
+              <p className="text-center text-gray-500">Loading...</p>
+            ) : hearings.length === 0 ? (
+              <p className="text-center text-gray-500">No hearings found</p>
+            ) : (
+              hearings.map((h) => (
                 <div
                   key={h._id}
-                  className="bg-[#0A0A0A] border border-white/5 rounded-3xl p-8 hover:border-red-600/30 transition"
+                  className="mb-6 border border-white/10 p-6 rounded-xl"
                 >
-                  <div className="flex justify-between items-start gap-6">
-                    <div>
-                      <p className="text-2xl text-white font-light">
-                        {new Date(h.date).toLocaleDateString("en-GB", {
-                          day: "2-digit",
-                          month: "short",
-                        })}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-2">
-                        {h.court || "Court not specified"}
-                      </p>
-                      <p className="text-sm text-gray-300 italic mt-1">
-                        "{h.purpose || "No purpose specified"}"
-                      </p>
-                    </div>
+                  <p className="text-white text-lg">
+                    {new Date(h.date).toDateString()}
+                  </p>
 
-                    {h.caseId && (
-                      <button
-                        onClick={() =>
-                          navigate(`/case/${h.caseId}/workspace`)
-                        }
-                        className="px-5 py-2 bg-white/5 hover:bg-white/10 text-xs rounded-xl"
-                      >
-                        Workspace
-                      </button>
-                    )}
-                  </div>
+                  <p className="text-gray-400">
+                    {h.court || "Court not specified"}
+                  </p>
+
+                  <p className="text-gray-300 italic">
+                    "{h.purpose || "No purpose specified"}"
+                  </p>
+
+                  {h.caseId && (
+                    <button
+                      onClick={() =>
+                        navigate(`/case/${h.caseId}/workspace`)
+                      }
+                      className="mt-3 px-4 py-2 bg-white/10 rounded-lg text-sm"
+                    >
+                      Open Case
+                    </button>
+                  )}
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+              ))
+            )}
+          </div>
 
-        {/* ================= MODAL ================= */}
-        {showAdd && (
-          <div
-            className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 p-6"
-            onClick={() => setShowAdd(false)}
-          >
-            <div
-              className="bg-[#0A0A0A] border border-white/10 w-full max-w-md rounded-3xl p-10 relative shadow-2xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* CLOSE BUTTON */}
-              <button
-                onClick={() => setShowAdd(false)}
-                className="absolute top-5 right-6 text-gray-500 hover:text-white text-xl"
-              >
-                ✕
-              </button>
+          {/* ================= MODAL ================= */}
+          {showAdd && (
+            <div className="fixed inset-0 bg-black/80 flex items-center justify-center">
+              <div className="bg-[#111] p-8 rounded-xl w-[400px]">
 
-              <h3 className="text-xl text-white mb-8">
-                Register Hearing
-              </h3>
+                <h3 className="text-white mb-6 text-lg">
+                  Register Hearing
+                </h3>
 
-              <div className="space-y-6">
-                <input
-                  placeholder="Case ID"
+                {/* 🔥 CASE DROPDOWN */}
+                <select
                   value={newHearing.caseId}
                   onChange={(e) =>
-                    setNewHearing((s) => ({
-                      ...s,
+                    setNewHearing((prev) => ({
+                      ...prev,
                       caseId: e.target.value,
                     }))
                   }
-                  className="w-full p-4 bg-black border border-white/10 rounded-xl text-sm"
-                />
+                  className="w-full p-3 mb-4 bg-black border border-white/10 rounded-xl text-sm"
+                >
+                  <option value="">Select Case</option>
 
+                  {cases.map((c) => (
+                    <option key={c._id} value={c._id}>
+                      {c.title} ({c._id.slice(-5)})
+                    </option>
+                  ))}
+                </select>
+
+                {/* DATE */}
                 <input
                   type="date"
                   value={newHearing.date}
                   onChange={(e) =>
-                    setNewHearing((s) => ({
-                      ...s,
+                    setNewHearing((prev) => ({
+                      ...prev,
                       date: e.target.value,
                     }))
                   }
-                  className="w-full p-4 bg-black border border-white/10 rounded-xl text-sm"
+                  className="w-full p-3 mb-4 bg-black border border-white/10 rounded-xl"
                 />
 
+                {/* COURT */}
                 <input
                   placeholder="Court"
                   value={newHearing.court}
                   onChange={(e) =>
-                    setNewHearing((s) => ({
-                      ...s,
+                    setNewHearing((prev) => ({
+                      ...prev,
                       court: e.target.value,
                     }))
                   }
-                  className="w-full p-4 bg-black border border-white/10 rounded-xl text-sm"
+                  className="w-full p-3 mb-4 bg-black border border-white/10 rounded-xl"
                 />
 
+                {/* PURPOSE */}
                 <input
                   placeholder="Purpose"
                   value={newHearing.purpose}
                   onChange={(e) =>
-                    setNewHearing((s) => ({
-                      ...s,
+                    setNewHearing((prev) => ({
+                      ...prev,
                       purpose: e.target.value,
                     }))
                   }
-                  className="w-full p-4 bg-black border border-white/10 rounded-xl text-sm"
+                  className="w-full p-3 mb-6 bg-black border border-white/10 rounded-xl"
                 />
-              </div>
 
-              <div className="mt-10 flex justify-end gap-3">
-                <button
-                  onClick={() => setShowAdd(false)}
-                  className="px-6 py-2 text-xs text-gray-500 hover:text-white uppercase"
-                >
-                  Cancel
-                </button>
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={() => setShowAdd(false)}
+                    className="px-4 py-2 text-gray-400"
+                  >
+                    Cancel
+                  </button>
 
-                <button
-                  onClick={addHearing}
-                  disabled={submitting}
-                  className="px-8 py-3 bg-red-600 hover:bg-red-500 rounded-xl text-xs font-bold uppercase text-white disabled:opacity-50"
-                >
-                  {submitting ? "Committing..." : "Commit to Registry"}
-                </button>
+                  <button
+                    onClick={addHearing}
+                    disabled={submitting}
+                    className="px-6 py-2 bg-red-600 text-white rounded-xl"
+                  >
+                    {submitting ? "Adding..." : "Add Hearing"}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
-      </div>
-    </PageTransition>
-  );
-}
+          )}
+        </div>
+      </PageTransition>
+    );
+  }

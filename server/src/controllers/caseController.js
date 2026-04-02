@@ -7,13 +7,11 @@ import path from "path";
 import { embedText } from "../utils/aiClient.js";
 
 /* ========================================================================
-   🔥 SAFE PDF PARSER (Node 24 + ESM Compatible)
+   🔥 SAFE PDF PARSER (Stable + Clean)
    ======================================================================== */
 
 async function parsePDF(buffer) {
   const mod = await import("pdf-parse");
-
-  // Handle all possible export shapes
   const pdfParse =
     mod.default?.default ||
     mod.default ||
@@ -27,10 +25,21 @@ async function parsePDF(buffer) {
 }
 
 /* ========================================================================
+   🧹 TEXT CLEANER (REMOVE BINARY JUNK)
+   ======================================================================== */
+
+function cleanText(text) {
+  if (!text) return "";
+  return text
+    .replace(/[^\x20-\x7E\n\r]/g, "") // remove binary chars
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/* ========================================================================
    🎯 CASE CRUD
    ======================================================================== */
 
-// GET CASES FOR LOGGED IN USER
 export const listCases = async (req, res) => {
   try {
     if (!req.user) {
@@ -79,7 +88,6 @@ export const listCases = async (req, res) => {
   }
 };
 
-// CREATE CASE
 export const createCase = async (req, res) => {
   try {
     if (!req.user) {
@@ -103,7 +111,6 @@ export const createCase = async (req, res) => {
   }
 };
 
-// UPDATE CASE
 export const updateCase = async (req, res) => {
   try {
     const updated = await CaseModel.findByIdAndUpdate(
@@ -118,7 +125,6 @@ export const updateCase = async (req, res) => {
   }
 };
 
-// DELETE CASE
 export const deleteCase = async (req, res) => {
   try {
     const caseId = req.params.id;
@@ -188,9 +194,10 @@ export const uploadCaseDocument = async (req, res) => {
     const filePathRel = `/uploads/${req.file.filename}`;
     const fullPath = path.join(process.cwd(), "uploads", req.file.filename);
 
-    let text = "";
     const ext = req.file.originalname.split(".").pop().toLowerCase();
+    let text = "";
 
+    /* ---------------- PDF ---------------- */
     if (ext === "pdf") {
       try {
         const buffer = fs.readFileSync(fullPath);
@@ -199,7 +206,10 @@ export const uploadCaseDocument = async (req, res) => {
       } catch (err) {
         console.error("PDF parse error:", err);
       }
-    } else {
+    }
+
+    /* ---------------- TXT ---------------- */
+    else if (ext === "txt") {
       try {
         text = fs.readFileSync(fullPath, "utf8");
       } catch {
@@ -207,12 +217,22 @@ export const uploadCaseDocument = async (req, res) => {
       }
     }
 
+    /* ---------------- OTHER FILES (skip) ---------------- */
+    else {
+      console.log("Skipping non-text file:", ext);
+      text = "";
+    }
+
+    text = cleanText(text);
+
     let embedding = [];
-    try {
-      const chunk = text.slice(0, 30000);
-      embedding = await embedText(chunk);
-    } catch (err) {
-      console.error("Embedding generation failed:", err);
+    if (text.length > 50) {
+      try {
+        const chunk = text.slice(0, 30000);
+        embedding = await embedText(chunk);
+      } catch (err) {
+        console.error("Embedding generation failed:", err);
+      }
     }
 
     const doc = await Document.create({
@@ -261,6 +281,3 @@ export const deleteDocument = async (req, res) => {
     res.status(500).json({ ok: false, error: err.message });
   }
 };
-
-
-

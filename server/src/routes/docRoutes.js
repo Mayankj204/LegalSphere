@@ -15,7 +15,7 @@ const router = express.Router();
 // FIX → accept field "document"
 const upload = multer({ dest: "uploads/" });
 
-router.post("/upload", upload.single("document"), uploadDocument);
+router.post("/upload", upload.single("file"), uploadDocument);
 
 router.get("/", getAllDocuments);
 router.get("/:id", getDocumentById);

@@ -1,15 +1,20 @@
-// server/src/routes/caseAiRoutes.js
 import express from "express";
-import { streamCaseAI } from "../controllers/caseAiController.js";
+import { protect } from "../middleware/authMiddleware.js";
+import { upload } from "../utils/upload.js";
+import {
+  caseChat,
+  getCaseChat,
+} from "../controllers/caseAiController.js";
 
 const router = express.Router();
 
-/* ============================================================
-   CASE-SPECIFIC AI CHAT (RAG + GPT2)
-   Example: POST /api/ai/case/12345/query
-   Body: { query: "What is the bail section?" }
-   ============================================================ */
+router.get("/case-chat/:caseId", protect, getCaseChat);
 
-router.post("/case/:caseId/query", streamCaseAI);
+router.post(
+  "/case-chat/:caseId",
+  protect,
+  upload.single("file"),
+  caseChat
+);
 
 export default router;

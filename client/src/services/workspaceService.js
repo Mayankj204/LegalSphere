@@ -99,10 +99,22 @@ const workspaceService = {
     return res.data.hearings || [];
   },
 
-  addHearing: async (caseId, payload) => {
-    const res = await api.post(`/cases/${caseId}/hearings`, payload);
-    return res.data.hearing;
-  },
+addHearing: async (caseId, payload) => {
+  const cleanId = String(caseId).replace(/"/g, "").trim();
+
+  if (!cleanId) throw new Error("Invalid caseId");
+
+  // 🔥 FORCE OBJECT (NO STRING ALLOWED)
+  const safePayload = {
+    date: payload.date,
+    court: payload.court,
+    purpose: payload.purpose,
+  };
+
+  console.log("FINAL PAYLOAD:", safePayload); // 🔥 DEBUG
+
+  return await API.post(`/cases/${cleanId}/hearings`, safePayload);
+},
 
   /* ===================== TASKS ===================== */
 
@@ -134,11 +146,27 @@ deleteNote: async (caseId, noteId) => {
 
   /* ===================== AI CHAT ===================== */
 
-  caseChat: async (caseId, message) => {
-    const res = await api.post(`/ai/case-chat/${caseId}`, { message });
-    return res.data;
-  }
+ getCaseChat: async (caseId) => {
+  const res = await api.get(`/ai/case-chat/${caseId}`);
+  return res.data.messages;
+},
+updateUser: async (payload) => {
+  const res = await api.patch(`/users/me`, payload);
+  return res.data.user;
+},
+caseChat: async (caseId, message, file) => {
+  const formData = new FormData();
+  formData.append("message", message);
+  if (file) formData.append("file", file);
 
-};
+  const res = await api.post(
+    `/ai/case-chat/${caseId}`,
+    formData,
+    { headers: { "Content-Type": "multipart/form-data" } }
+  );
+
+  return res.data;
+}
+}
 
 export default workspaceService;

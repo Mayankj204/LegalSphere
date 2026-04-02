@@ -5,81 +5,85 @@ let embedder = null;
 let generator = null;
 let initPromise = null;
 
-/* ============================================================
-   Initialize Pipelines (MiniLM + GPT2)
-   ============================================================ */
-
+/* ================= INIT ================= */
 export async function initAI() {
   if (initPromise) return initPromise;
 
   initPromise = (async () => {
-    console.log("⏳ Initializing AI pipelines...");
+    console.log("⏳ Initializing AI...");
 
-    // MiniLM sentence embeddings
     embedder = await pipeline(
       "feature-extraction",
-      "Xenova/all-MiniLM-L6-v2", // local or hub
-      { progress_callback: () => {} }
+      "Xenova/all-MiniLM-L6-v2"
     );
 
-    // Simple generator for chatbot
-    generator = await pipeline("text-generation", "Xenova/gpt2", {
-      max_length: 512,
-    });
+    generator = await pipeline(
+      "text2text-generation",
+      "Xenova/flan-t5-small"
+    );
 
-    console.log("✅ AI pipelines ready.");
+    console.log("✅ AI ready");
   })();
 
   return initPromise;
 }
 
-/* ============================================================
-   EMBEDDING FIX — supports ALL Xenova tensor shapes
-   ============================================================ */
-
+/* ================= EMBEDDING ================= */
 export async function embedText(text) {
   await initAI();
 
-  const output = await embedder(text, { pooling: "mean", normalize: true });
+  const output = await embedder(text, {
+    pooling: "mean",
+    normalize: true,
+  });
 
   let vector;
 
-  // Case 1: [[vec]]
-  if (Array.isArray(output) && Array.isArray(output[0])) {
-    vector = output[0];
-  }
-  // Case 2: [vec]
-  else if (Array.isArray(output)) {
-    vector = output;
-  }
-  // Case 3: Tensor { data: Float32Array }
-  else if (output?.data) {
-    vector = Array.from(output.data);
-  } else {
-    console.error(output);
-    throw new Error("Unexpected embedder output shape");
-  }
+  if (Array.isArray(output?.[0])) vector = output[0];
+  else if (Array.isArray(output)) vector = output;
+  else if (output?.data) vector = Array.from(output.data);
+  else throw new Error("Invalid embedding output");
 
-  // Normalize (best for cosine search)
   const norm = Math.hypot(...vector);
-  if (norm > 0) vector = vector.map((v) => v / norm);
-
-  return vector;
+  return norm > 0 ? vector.map((v) => v / norm) : vector;
 }
 
-/* ============================================================
-   GENERATION (For General Chatbot)
-   ============================================================ */
-
-export async function generateAnswer(prompt, opts = {}) {
+/* ================= GENERATE ================= */
+export async function generateAnswer(question, { context = "" }) {
   await initAI();
 
+  const prompt = `
+Answer ONLY using the given context.
+
+RULES:
+- Do NOT guess
+- Do NOT add extra info
+- If answer not present → say "Not found in uploaded documents."
+
+Context:
+${context}
+
+Question:
+${question}
+
+Answer:
+`;
+
   const out = await generator(prompt, {
-    max_length: opts.max_length || 512,
-    temperature: opts.temperature || 0.7,
-    top_p: opts.top_p || 0.9,
-    do_sample: true,
+    max_new_tokens: 120,
   });
 
-  return out[0].generated_text;
+  let text = out?.[0]?.generated_text || "";
+
+  if (text.includes("Answer:")) {
+    text = text.split("Answer:").pop().trim();
+  }
+
+  text = text.replace(/\s+/g, " ").trim();
+
+  if (!text || text.length < 5) {
+    return "Not found in uploaded documents.";
+  }
+
+  return text;
 }

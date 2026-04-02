@@ -1,12 +1,21 @@
-// server/src/controllers/caseAiController.js
 import Document from "../models/Document.js";
+import CaseChat from "../models/CaseChat.js";
+import fs from "fs";
+import path from "path";
+import { createRequire } from "module";
+
+const require = createRequire(import.meta.url);
+const pdfParse = require("pdf-parse");
+const pdf = pdfParse.default || pdfParse;
+
 import { embedText, generateAnswer } from "../utils/aiClient.js";
 
-/* ------------------------------------------------------------
-   UTILITY: COSINE SIMILARITY
------------------------------------------------------------- */
+/* ================= COSINE ================= */
 function cosineSim(a, b) {
-  let dot = 0, na = 0, nb = 0;
+  let dot = 0,
+    na = 0,
+    nb = 0;
+
   for (let i = 0; i < a.length; i++) {
     const x = a[i] || 0;
     const y = b[i] || 0;
@@ -14,119 +23,163 @@ function cosineSim(a, b) {
     na += x * x;
     nb += y * y;
   }
+
   return dot / (Math.sqrt(na) * Math.sqrt(nb) + 1e-8);
 }
 
-/* ------------------------------------------------------------
-   CASE-SPECIFIC AI CHAT (STREAMING)
-   Route: POST /api/ai/case/:caseId/query
------------------------------------------------------------- */
-export const streamCaseAI = async (req, res) => {
+/* ================= CLEAN ================= */
+function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/[^\x20-\x7E\n]/g, " ").replace(/\s+/g, " ").trim();
+}
+
+/* ================= CHUNKING ================= */
+function chunkText(text, size = 500) {
+  const chunks = [];
+  for (let i = 0; i < text.length; i += size) {
+    chunks.push(text.slice(i, i + size));
+  }
+  return chunks;
+}
+
+/* ================= GET CHAT ================= */
+export const getCaseChat = async (req, res) => {
+  try {
+    const chat = await CaseChat.findOne({ caseId: req.params.caseId }).lean();
+    res.json({ ok: true, messages: chat?.messages || [] });
+  } catch {
+    res.status(500).json({ ok: false });
+  }
+};
+
+/* ================= MAIN CHAT ================= */
+export const caseChat = async (req, res) => {
   try {
     const { caseId } = req.params;
-    const { query } = req.body;
+    const { message } = req.body;
 
-    if (!query) {
-      return res.status(400).json({ error: "Query is required." });
-    }
+    let chat = await CaseChat.findOne({ caseId });
+    if (!chat) chat = await CaseChat.create({ caseId, messages: [] });
 
-    /* ----------------------------------------------
-       SSE HEADERS
-    ---------------------------------------------- */
-    res.writeHead(200, {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache, no-transform",
-      Connection: "keep-alive",
-      "Access-Control-Allow-Origin": "*",
+    chat.messages.push({
+      role: "user",
+      text: message || "Uploaded a file",
     });
 
-    const send = (data) => {
-      res.write(`data: ${JSON.stringify(data)}\n\n`);
-    };
+    /* ================= FILE ================= */
+    if (req.file) {
+      const fullPath = path.join(process.cwd(), "uploads", req.file.filename);
+      const ext = req.file.originalname.split(".").pop().toLowerCase();
 
-    /* ----------------------------------------------
-       1. Load all documents with embeddings
-    ---------------------------------------------- */
+      let extractedText = "";
+
+      try {
+        if (ext === "pdf") {
+          const buffer = fs.readFileSync(fullPath);
+          const data = await pdf(buffer);
+          extractedText = data?.text || "";
+        }
+
+        if (ext === "txt") {
+          extractedText = fs.readFileSync(fullPath, "utf8");
+        }
+      } catch (err) {
+        console.error("PDF ERROR:", err);
+      }
+
+      extractedText = cleanText(extractedText);
+
+      console.log("PDF SAMPLE:\n", extractedText.slice(0, 300));
+
+      /* ❌ if unreadable */
+      if (!extractedText || extractedText.length < 50) {
+        return res.json({
+          ok: true,
+          answer: "Unable to read document properly.",
+          sources: [],
+        });
+      }
+
+      /* ================= CHUNK + STORE ================= */
+      const chunks = chunkText(extractedText);
+
+      for (const chunk of chunks) {
+        const embedding = await embedText(chunk);
+
+        await Document.create({
+          caseId,
+          filename: req.file.originalname,
+          storageUrl: `/uploads/${req.file.filename}`,
+          fullText: chunk,
+          embedding,
+        });
+      }
+    }
+
+    /* ================= RETRIEVE ================= */
     const docs = await Document.find({
       caseId,
-      embedding: { $exists: true, $ne: [] }
+      embedding: { $ne: [] },
     }).lean();
 
     if (!docs.length) {
-      // No embeddings — just answer normally
-      const answer = await generateAnswer(query);
-
-      // Simulate streaming
-      const chunks = answer.match(/.{1,40}/g) || [];
-      for (const c of chunks) {
-        await new Promise((r) => setTimeout(r, 20));
-        send({ text: c });
-      }
-      send({ done: true });
-      return res.end();
+      return res.json({
+        ok: true,
+        answer: "No documents uploaded.",
+        sources: [],
+      });
     }
 
-    /* ----------------------------------------------
-       2. Embed question
-    ---------------------------------------------- */
-    const qVec = await embedText(query);
+    const qVec = await embedText(message);
 
-    /* ----------------------------------------------
-       3. Compute similarity between question and docs
-    ---------------------------------------------- */
     const scored = docs.map((d) => ({
       doc: d,
-      score: cosineSim(qVec, d.embedding || []),
+      score: cosineSim(qVec, d.embedding),
     }));
 
-    scored.sort((a, b) => b.score - a.score);
+    const top = scored
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3);
 
-    const TOP_K = 4;
-    const top = scored.slice(0, TOP_K).filter((s) => s.score > 0.05);
+    console.log("TOP MATCH:\n", top[0]?.doc.fullText);
 
-    /* ----------------------------------------------
-       4. Build context from top documents
-    ---------------------------------------------- */
-    const contextParts = top.map((t, idx) => {
-      const text = (t.doc.fullText || "").slice(0, 1500);
-      return `Source ${idx + 1} (${t.doc.filename}):\n${text}`;
-    });
-
-    const context = contextParts.join("\n\n");
-
-    /* ----------------------------------------------
-       5. Build final GPT prompt
-    ---------------------------------------------- */
-    const prompt = `
-You are a legal assistant. Use ONLY the following case documents to answer.
-If answer not in the documents, say so (do NOT hallucinate).
-
-Context:
-${context}
-
-Question:
-${query}
-
-Answer clearly and reference documents using [Source 1], [Source 2], etc.
-    `;
-
-    /* ----------------------------------------------
-       6. Generate answer and stream token-by-token
-    ---------------------------------------------- */
-    const output = await generateAnswer(prompt);
-
-    const chunks = output.match(/.{1,40}/g) || [];
-
-    for (const c of chunks) {
-      await new Promise((r) => setTimeout(r, 20));
-      send({ text: c });
+    /* ================= STRICT FILTER ================= */
+    if (!top.length || top[0].score < 0.3) {
+      return res.json({
+        ok: true,
+        answer: "Not found in uploaded documents.",
+        sources: [],
+      });
     }
 
-    send({ done: true });
-    res.end();
+    const context = top
+      .map((t) => t.doc.fullText.slice(0, 250))
+      .join("\n\n");
+
+    const answer = await generateAnswer(message, { context });
+
+    chat.messages.push({
+      role: "assistant",
+      text: answer,
+      sources: top.map((t) => ({
+        filename: t.doc.filename,
+        snippet: t.doc.fullText.slice(0, 150),
+      })),
+    });
+
+    await chat.save();
+
+    return res.json({
+      ok: true,
+      answer,
+      sources: top.map((t) => ({
+        filename: t.doc.filename,
+        snippet: t.doc.fullText.slice(0, 150),
+      })),
+    });
+
   } catch (err) {
-    console.error("CaseAI Error:", err);
-    res.write(`data: ${JSON.stringify({ error: "AI error", done: true })}\n\n`);
-    res.end();
+    console.error("AI ERROR FULL:", err);
+    res.status(500).json({ error: "AI error" });
   }
 };

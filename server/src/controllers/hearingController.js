@@ -16,13 +16,20 @@ export const getHearings = async (req, res) => {
 /* CREATE */
 export const createHearing = async (req, res) => {
   try {
+    const { caseId } = req.params;
+
     const hearing = await Hearing.create({
-      ...req.body,
+      title: req.body.purpose || "Court Hearing", // 🔥 FIX
+      description: req.body.purpose || "",
+      date: req.body.date,
+      type: "Hearing",
+      caseId, // 🔥 ADD THIS
       lawyer: req.user._id,
     });
 
     res.status(201).json(hearing);
   } catch (err) {
+    console.error("CREATE HEARING ERROR:", err); // 🔥 DEBUG
     res.status(500).json({ error: "Failed to create hearing" });
   }
 };
@@ -44,6 +51,7 @@ export const updateHearing = async (req, res) => {
     res.status(500).json({ error: "Failed to update hearing" });
   }
 };
+
 
 /* DELETE */
 export const deleteHearing = async (req, res) => {

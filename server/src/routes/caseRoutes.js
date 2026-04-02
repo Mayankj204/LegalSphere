@@ -1,4 +1,3 @@
-// server/src/routes/caseRoutes.js
 import express from "express";
 import { protect } from "../middleware/authMiddleware.js";
 
@@ -14,7 +13,9 @@ import {
   deleteDocument,
 } from "../controllers/caseController.js";
 
-// 🔥 Import Note Controllers
+/* 🔥 FIXED IMPORT */
+import { createHearing } from "../controllers/hearingController.js";
+
 import {
   getNotes,
   addNote,
@@ -26,30 +27,25 @@ import { upload } from "../utils/upload.js";
 
 const router = express.Router();
 
-/* ================================
-   CASE CRUD
-   ================================ */
+/* ================= CASE CRUD ================= */
 router.get("/", protect, listCases);
 router.post("/", protect, createCase);
 router.patch("/:id", protect, updateCase);
 router.delete("/:id", protect, deleteCase);
 
-/* ================================
-   CASE DETAILS
-   ================================ */
+/* ================= CASE DETAILS ================= */
 router.get("/:caseId", protect, getCaseById);
 
-/* ================================
-   NOTES ROUTES
-   ================================ */
+/* 🔥 FIXED ROUTE */
+router.post("/:caseId/hearings", protect, createHearing);
+
+/* ================= NOTES ================= */
 router.get("/:caseId/notes", protect, getNotes);
 router.post("/:caseId/notes", protect, addNote);
 router.patch("/:caseId/notes/:noteId", protect, updateNote);
 router.delete("/:caseId/notes/:noteId", protect, deleteNote);
 
-/* ================================
-   DOCUMENT MANAGEMENT
-   ================================ */
+/* ================= DOCUMENTS ================= */
 router.get("/:caseId/documents", protect, getCaseDocuments);
 
 router.post(
@@ -59,16 +55,8 @@ router.post(
   uploadCaseDocument
 );
 
-router.patch(
-  "/:caseId/documents/:docId",
-  protect,
-  updateDocument
-);
+router.patch("/:caseId/documents/:docId", protect, updateDocument);
 
-router.delete(
-  "/:caseId/documents/:docId",
-  protect,
-  deleteDocument
-);
+router.delete("/:caseId/documents/:docId", protect, deleteDocument);
 
 export default router;
